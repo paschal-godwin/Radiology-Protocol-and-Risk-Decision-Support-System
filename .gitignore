@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual env
+venv/
+.venv/
+venv2/
+.venv2/
+env/
+
+# Secrets / env
+.env
+.streamlit/secrets.toml
+
+# OS / editor
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Test / logs
+.pytest_cache/
+*.log
+
+# Data artifacts
+eval/results/latest_run.json
+eval/results/*.json

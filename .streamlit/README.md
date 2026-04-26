@@ -1,0 +1,210 @@
+# Radiology Protocol & Risk Decision Support System
+## CT Contrast Assistant V1
+
+A deterministic clinical decision-support prototype for CT contrast risk assessment.
+
+This project combines:
+- rule-based radiology risk assessment
+- topic-aware retrieval over guideline documents
+- claim-aware evidence selection
+- confidence-aware explanations
+- retrieval/debug observability
+- structured evaluation with manual evidence-quality review
+
+## Why this project exists
+
+Radiology screening and protocol decisions are often handled through human judgment, paper workflows, and local practice patterns. This project explores how a high-stakes clinical workflow can be made more structured, auditable, and explainable without relying on a freeform chatbot.
+
+Instead of generating decisions directly from an LLM, the system uses deterministic logic for risk classification and retrieval-backed evidence only for explanation and support.
+
+## What the system does
+
+Given a patient case, the system evaluates:
+- renal risk
+- prior contrast reaction risk
+- pregnancy-related risk
+- missing screening information
+
+It then produces:
+- an overall risk level
+- a recommended action
+- a protocol recommendation
+- a grounded explanation
+- claim-linked citations
+- a confidence breakdown
+- a technical debug trace
+
+## Key features
+
+- **Deterministic decision layer**
+  - rule-based handling of renal, pregnancy, contrast reaction, and missing-info scenarios
+
+- **Topic-aware retrieval**
+  - focused evidence retrieval by topic instead of one blended search
+
+- **Claim-aware evidence selection**
+  - citation selection refined beyond topic relevance toward claim support
+
+- **Confidence breakdown**
+  - rule confidence
+  - retrieval confidence
+  - citation alignment confidence
+  - completeness confidence
+
+- **Retrieval observability**
+  - candidate-level traces
+  - adjusted scores
+  - rejection reasons
+  - selected evidence trace
+
+## System architecture
+
+### 1. Deterministic Decision Layer
+The system first evaluates the case using explicit rules. This decides the risk level and action before any retrieval happens.
+
+### 2. Retrieval Layer
+Only the clinically relevant topics are queried against the vector store.
+
+### 3. Evidence Selection Layer
+Retrieved chunks are reranked with lightweight deterministic scoring using:
+- topic keyword matches
+- claim alignment bonus
+- generic penalty
+- adjusted selection score
+
+### 4. Explanation Layer
+The explanation is built from rule-based factors first, then grounded with selected supporting citations.
+
+### 5. Confidence Layer
+The system computes a structured confidence breakdown instead of relying on a model’s self-reported certainty.
+
+## Example outputs
+
+The app can distinguish between:
+- **hold and review**
+- **proceed with caution or review**
+- **proceed**
+- **hold and clarify**
+
+It can also explain why a case was blocked, which topic triggered the decision, and which evidence supported the explanation.
+
+## Evaluation
+
+V1 includes an evaluation set covering:
+- high renal risk only
+- severe contrast reaction only
+- combined renal + severe reaction
+- pregnancy review case
+- missing eGFR / insufficient information
+- low-risk proceed case
+
+Current status:
+- **6/6 cases passing**
+- evidence expectations reviewed for selected key cases
+- manual evidence-quality labels included as reviewer notes (`strong`, `acceptable`, `not_applicable`)
+
+## Why this is not a chatbot
+
+This project is not designed as a freeform medical chatbot.
+
+It is designed as a **deterministic decision-support system** where:
+- decisions come from explicit rules
+- retrieval supports explanations
+- evidence selection is inspectable
+- confidence is conservative and decomposed
+- outputs are easier to audit and test
+
+## Streamlit app
+
+The Streamlit interface includes:
+- structured patient case input
+- assessment summary
+- evidence-backed explanation
+- confidence panel
+- technical debug view
+
+## Project structure
+
+```text
+radiology-decision-support/
+├── app/
+│   ├── api/
+│   ├── engines/
+│   ├── rag/
+│   ├── rules/
+│   ├── schemas/
+│   └── services/
+├── data/
+├── eval/
+├── scripts/
+├── streamlit_app.py
+├── requirements.txt
+└── README.md
+```
+## Installation
+
+    git clone <your-repo-url>
+    cd radiology-decision-support
+    python -m venv venv\
+    venv\Scripts\activate\
+    pip install -r requirements.txt
+
+## Local setup
+
+Create a local secrets file:
+
+    # .streamlit/secrets.toml
+    OPENAI_API_KEY = "your_key_here"
+
+Or use a .env file if you prefer local dotenv-based development.
+
+## Run locally
+    streamlit run streamlit_app.py
+
+## Deployment
+
+This app is designed for Streamlit Community Cloud deployment.
+
+To deploy:
+
+1. Push the repo to GitHub.
+2. Make sure streamlit_app.py is the entrypoint.
+3. Add requirements.txt in the repo root.
+4. Add your API key in Streamlit Cloud Secrets.
+5. Deploy the app from the Streamlit dashboard.
+
+## Limitations
+
+ - V1 focuses on CT contrast decision support only
+ - evidence quality is improved but still not a substitute for full clinical validation
+ - this is a portfolio-grade prototype, not a production-certified hospital system
+ - adoption in real clinical environments would require workflow integration, policy review, and validation
+
+## Roadmap
+
+- MRI safety / protocol extension
+- support for additional modalities
+- richer evidence quality evaluation
+- better human-readable protocol rendering
+- stronger UI polish and case walkthroughs
+
+## Demo Screenshots
+
+### 1. Patient Case Input
+![Input UI](screenshots/1_input_ui.png)
+
+### 2. High-Risk Scenario (Renal + Severe Reaction)
+![High Risk](screenshots/2_high_risk_case.png)
+
+### 3. Low-Risk Scenario
+![Low Risk](screenshots/3_low_risk_case.png)
+
+### 4. System Debug & Evidence Trace
+![Debug Trace](screenshots/4_debug_trace.png)
+
+### 5. System Debug & Evidence Trace
+![Debug Trace](screenshots/5_debug_trace_2.png)
+
+## Author
+
+Built by Paschal Godwin as a portfolio project in deterministic, reliable RAG for healthcare decision support.
