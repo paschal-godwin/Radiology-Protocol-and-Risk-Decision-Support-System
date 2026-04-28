@@ -143,7 +143,7 @@ radiology-decision-support/
 ```
 ## Installation
 
-    git clone <your-repo-url>
+    git clone REA
     cd radiology-decision-support
     python -m venv venv\
     venv\Scripts\activate\
@@ -161,17 +161,27 @@ Or use a .env file if you prefer local dotenv-based development.
 ## Run locally
     streamlit run streamlit_app.py
 
-## Deployment
+## Deployment (Streamlit Cloud)
 
-This app is designed for Streamlit Community Cloud deployment.
+This app can be deployed via Streamlit Community Cloud.
 
-To deploy:
+### Steps
 
-1. Push the repo to GitHub.
-2. Make sure streamlit_app.py is the entrypoint.
-3. Add requirements.txt in the repo root.
-4. Add your API key in Streamlit Cloud Secrets.
-5. Deploy the app from the Streamlit dashboard.
+1. Push this repo to GitHub
+2. Go to Streamlit Cloud
+3. Select this repository
+4. Set entry point to:
+   streamlit_app.py
+5. Add secrets:
+
+OPENAI_API_KEY="your_key_here"
+
+6. Deploy
+
+### Notes
+
+- Uses FAISS (no external DB required)
+- Deterministic decision logic + RAG explanation layer
 
 ## Limitations
 
