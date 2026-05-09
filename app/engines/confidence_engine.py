@@ -200,13 +200,28 @@ def compute_citation_alignment_confidence(
     matched = sum(1 for claim in active_claims if claim in actual_claims)
     coverage = matched / len(active_claims)
 
-    extra_citations = max(0, len(actual_claims) - len(active_claims))
+    unexpected_claims = [
+        claim for claim in actual_claims
+        if claim and claim not in active_claims
+    ]
+
+    missing_claims = [
+        claim for claim in active_claims
+        if claim not in actual_claims
+    ]
 
     score = coverage
-    if extra_citations > 0:
-        score -= 0.10 * extra_citations
+
+    if missing_claims:
+        score -= 0.15 * len(missing_claims)
         reasons.append(
-            f"{extra_citations} extra citation(s) were emitted beyond active claims."
+            f"Missing citation support for claim(s): {', '.join(missing_claims)}."
+        )
+
+    if unexpected_claims:
+        score -= 0.15 * len(unexpected_claims)
+        reasons.append(
+            f"Unexpected citation claim(s) emitted: {', '.join(unexpected_claims)}."
         )
 
     if coverage == 1.0:
