@@ -11,6 +11,7 @@ def derive_active_topics_and_claims(
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
+    metformin_risk: dict
 ) -> Tuple[List[str], List[str]]:
     active_topics = []
     active_claims = []
@@ -31,6 +32,10 @@ def derive_active_topics_and_claims(
         active_topics.append("pregnancy")
         active_claims.append("pregnancy_risk")
 
+    if metformin_risk.get("flag") in {"metformin_risk_hold_required", "metformin_risk_low_review_recommended"}:
+        active_topics.append("metformin")
+        active_claims.append("metformin_risk")
+
     # Missing information is intentionally NOT added as an active claim/topic.
     # It is handled through completeness confidence, not retrieval/citation support.
 
@@ -42,6 +47,7 @@ def compute_rule_confidence(
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
+    metformin_risk: dict,
     overall_decision: dict,
 ) -> ConfidenceComponent:
     reasons = []
@@ -58,6 +64,7 @@ def compute_rule_confidence(
         renal_risk.get("flag") == "high_renal_risk",
         pregnancy_risk.get("flag") == "pregnancy_risk_review_required",
         contrast_reaction_risk.get("flag") == "high_contrast_reaction_risk",
+        metformin_risk.get("flag") == "metformin_risk_hold_required",   
     ]
 
     active_moderate_flags = [
@@ -68,6 +75,7 @@ def compute_rule_confidence(
             "mild_contrast_reaction_risk",
             "contrast_reaction_history_unknown",
         },
+        metformin_risk.get("flag") == "metformin_risk_low_review_recommended",
     ]
 
     if any(active_high_flags):
@@ -252,6 +260,7 @@ def build_confidence(
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
+    metformin_risk: dict,
     overall_decision: dict,
     retrieved_guideline_evidence,
     explanation: dict,
@@ -261,6 +270,7 @@ def build_confidence(
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
+        metformin_risk=metformin_risk,
     )
 
     rule_conf = compute_rule_confidence(
@@ -268,6 +278,7 @@ def build_confidence(
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
+        metformin_risk=metformin_risk,
         overall_decision=overall_decision,
     )
 

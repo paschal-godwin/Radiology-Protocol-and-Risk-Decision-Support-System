@@ -18,6 +18,8 @@ from app.schemas.input import (  # noqa: E402
     PregnancyStatus,
     PriorContrastReaction,
     UrgencyLevel,
+    DiabetesStatus,
+    MetforminUse,
 )
 from app.services.assessment_service import run_assessment  # noqa: E402
 
@@ -44,6 +46,8 @@ def initialize_state():
         "pregnancy_status": "not_applicable",
         "reaction": "none",
         "loaded_demo_name": "None",
+        "diabetes_status": "unknown",
+        "metformin_use": "unknown",
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -236,6 +240,7 @@ def build_case_input_from_form() -> RadiologyCaseInput | None:
 
     col1, col2, col3 = st.columns(3)
 
+
     with col1:
         age = st.number_input(
             "Age",
@@ -274,6 +279,17 @@ def build_case_input_from_form() -> RadiologyCaseInput | None:
             options=["false", "true", "unknown"],
             key="allergy",
         )
+        diabetes_status = st.selectbox(
+            "Diabetes Status",
+            options=[member.value for member in DiabetesStatus],
+            key="diabetes",
+        )
+        metformin_use = st.selectbox(
+            "Metformin Use",
+            options=[member.value for member in MetforminUse],
+            key="metformin",
+        )
+
 
     with col3:
         egfr_input = st.text_input(
@@ -335,6 +351,8 @@ def build_case_input_from_form() -> RadiologyCaseInput | None:
         egfr=egfr_value,
         allergy_history=allergy_history_value,
         prior_contrast_reaction=PriorContrastReaction(prior_contrast_reaction),
+        diabetes_status=DiabetesStatus(diabetes_status),
+        metformin_use=MetforminUse(metformin_use),
     )
 
 
@@ -393,6 +411,7 @@ def render_assessment(result: dict):
         st.subheader("Why the System Made This Decision")
         st.write(safe_get(explanation, "reasoning_summary", ""))
 
+
         rule_based_factors = safe_get(explanation, "rule_based_factors", [])
         if rule_based_factors:
             st.markdown("**Rule-Based Factors**")
@@ -403,6 +422,7 @@ def render_assessment(result: dict):
             st.markdown("**Missing Information**")
             for item in missing_info:
                 st.write(f"- {item}")
+    
 
         next_steps = safe_get(protocol, "next_steps", [])
         if next_steps:

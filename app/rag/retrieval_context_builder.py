@@ -7,6 +7,7 @@ def build_retrieval_queries(
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
+    metformin_risk: dict,
     overall_decision: dict,
     protocol_recommendation: dict,
 ) -> list[dict]:
@@ -80,6 +81,18 @@ def build_retrieval_queries(
                 f"{common_context} "
                 f"Pregnancy status: {case.pregnancy_status.value}. "
                 "Imaging in pregnancy, contrast safety in pregnancy, precautions before proceeding."
+            )
+        })
+
+    metformin_flag = metformin_risk.get("flag")
+    if metformin_flag in {"metformin_risk_hold_required", "metformin_risk_low_review_recommended"}:
+        queries.append({
+            "topic": "metformin",
+            "query": (
+                f"{common_context} "
+                f"Patient is on metformin: {case.metformin_use.value}. "
+                "Iodinated contrast use in patients on metformin, renal function monitoring, "
+                "precautions and contraindications."
             )
         })
 

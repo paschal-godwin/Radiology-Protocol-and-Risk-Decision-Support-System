@@ -2,6 +2,7 @@ from app.rules.missing_info import detect_missing_information
 from app.rules.renal import assess_renal_risk
 from app.rules.pregnancy import assess_pregnancy_risk
 from app.rules.contrast_reaction import assess_contrast_reaction_risk
+from app.rules.metformin import assess_metformin_risk
 from app.rules.aggregator import generate_overall_decision
 from app.engines.recommendation_engine import generate_protocol_recommendation
 from app.engines.explanation_engine import generate_explanation
@@ -19,13 +20,15 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
     renal_risk = assess_renal_risk(case)
     pregnancy_risk = assess_pregnancy_risk(case)
     contrast_reaction_risk = assess_contrast_reaction_risk(case)
-
+    metformin_risk = assess_metformin_risk(case)
     overall_decision = generate_overall_decision(
         missing_information=missing_info,
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
+        metformin_risk=metformin_risk,
     )
+    
 
     protocol_recommendation = generate_protocol_recommendation(
         overall_decision=overall_decision,
@@ -33,6 +36,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
+        metformin_risk=metformin_risk,
     )
 
     retrieval_queries = build_retrieval_queries(
@@ -41,6 +45,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
+        metformin_risk=metformin_risk,      
         overall_decision=overall_decision,
         protocol_recommendation=protocol_recommendation,
     )
@@ -57,6 +62,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
+        metformin_risk=metformin_risk,
         overall_decision=overall_decision,
         protocol_recommendation=protocol_recommendation,
         retrieved_guideline_evidence=retrieved_guideline_evidence,
@@ -67,6 +73,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
+        metformin_risk=metformin_risk,
     )
 
     confidence = build_confidence(
@@ -74,6 +81,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
+        metformin_risk=metformin_risk,
         overall_decision=overall_decision,
         retrieved_guideline_evidence=retrieved_guideline_evidence,
         explanation=explanation,
@@ -134,6 +142,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         "renal_risk": renal_risk,
         "pregnancy_risk": pregnancy_risk,
         "contrast_reaction_risk": contrast_reaction_risk,
+        "metformin_risk": metformin_risk,
         "overall_decision": overall_decision,
         "protocol_recommendation": protocol_recommendation,
         "explanation": explanation,

@@ -25,6 +25,7 @@ def generate_explanation(
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
+    metformin_risk: dict,
     overall_decision: dict,
     protocol_recommendation: dict,
     retrieved_guideline_evidence: RetrievedGuidelineEvidence | None = None,
@@ -57,6 +58,11 @@ def generate_explanation(
         explanation_parts.append(contrast_message)
         rule_based_factors.append(contrast_message)
 
+    metformin_message = metformin_risk.get("message")
+    if metformin_message and metformin_risk.get("flag") is not None:
+        explanation_parts.append(metformin_message)
+        rule_based_factors.append(metformin_message)
+
     decision_summary = overall_decision.get("summary")
     if decision_summary:
         explanation_parts.append(decision_summary)
@@ -64,6 +70,7 @@ def generate_explanation(
     renal_citation = None
     reaction_citation = None
     pregnancy_citation = None
+    metformin_citation = None
 
     if retrieved_guideline_evidence and retrieved_guideline_evidence.evidence_items:
         if renal_risk.get("flag") in {"high_renal_risk", "moderate_renal_risk"}:
@@ -81,6 +88,11 @@ def generate_explanation(
         if pregnancy_risk.get("flag") == "pregnancy_risk_review_required":
             pregnancy_citation = _get_best_citation_by_topic(
                 retrieved_guideline_evidence, "pregnancy"
+            )
+
+        if metformin_risk.get("flag") in {"metformin_risk_hold_required", "metformin_risk_low_review_recommended"}:
+            metformin_citation = _get_best_citation_by_topic(
+                retrieved_guideline_evidence, "metformin"
             )
 
     if renal_citation:
@@ -125,6 +137,21 @@ def generate_explanation(
                 page_number=pregnancy_citation.page_number,
                 section=pregnancy_citation.section,
                 snippet=pregnancy_citation.snippet,
+            )
+        )
+
+    if metformin_citation:
+        evidence_lines.append(
+            f"Methformin-related support was retrieved from {_build_citation_label(metformin_citation)}."
+        )
+        citations.append(
+            ExplanationCitation(
+                claim="metformin_risk",
+                topic=metformin_citation.topic,
+                source_title=metformin_citation.source_title,
+                page_number=metformin_citation.page_number,
+                section=metformin_citation.section,
+                snippet=metformin_citation.snippet,
             )
         )
 

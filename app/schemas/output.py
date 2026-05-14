@@ -80,6 +80,7 @@ class RuleTrace(BaseModel):
     renal_flag: Optional[str] = None
     pregnancy_flag: Optional[str] = None
     contrast_reaction_flag: Optional[str] = None
+    metformin_flag: Optional[str] = None
     active_topics: List[str] = []
     active_claims: List[str] = []
 
@@ -134,6 +135,7 @@ class AssessmentResponse(BaseModel):
     renal_risk: RiskAssessmentResult
     pregnancy_risk: RiskAssessmentResult
     contrast_reaction_risk: RiskAssessmentResult
+    metformin_risk: RiskAssessmentResult
     overall_decision: OverallDecision
     protocol_recommendation: ProtocolRecommendation
     explanation: ExplanationResult

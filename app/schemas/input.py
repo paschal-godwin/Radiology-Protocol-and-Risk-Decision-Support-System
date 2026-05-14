@@ -29,6 +29,16 @@ class UrgencyLevel(str, Enum):
     urgent = "urgent"
     emergency = "emergency"
 
+class DiabetesStatus(str, Enum):
+    diabetic = "diabetic"
+    non_diabetic = "non_diabetic"
+    unknown = "unknown"
+
+class MetforminUse(str, Enum):
+    yes = "yes"
+    no = "no"
+    unknown = "unknown"
+
 
 class RadiologyCaseInput(BaseModel):
     
@@ -46,3 +56,5 @@ class RadiologyCaseInput(BaseModel):
     egfr: Optional[float] = None
     allergy_history: Optional[bool] = None
     prior_contrast_reaction: PriorContrastReaction = PriorContrastReaction.none
+    diabetes_status: DiabetesStatus = DiabetesStatus.unknown
+    metformin_use: MetforminUse = MetforminUse.unknown

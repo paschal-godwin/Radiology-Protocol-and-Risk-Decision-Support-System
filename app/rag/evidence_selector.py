@@ -16,6 +16,9 @@ TOPIC_KEYWORDS = {
     "pregnancy": [
         "pregnancy", "pregnant", "fetus", "fetal", "maternal"
     ],
+    "metformin": [
+        "metformin", "diabetes", "type 2 diabetes", "renal function", "contrast"
+    ]
 }
 
 # NEW:
@@ -61,6 +64,19 @@ CLAIM_KEYWORDS = {
         "before proceeding",
         "review",
     ],
+    "metformin": [
+        "metformin",
+        "diabetes",
+        "type 2 diabetes",
+        "renal function",
+        "contrast",
+        "review before proceeding",
+        "caution",
+        "AKI",
+        "acute kidney injury",
+        "CKD",
+        "hold metformin",
+    ]
 }
 
 GENERIC_SIGNALS = [

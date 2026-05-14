@@ -4,11 +4,14 @@ def generate_protocol_recommendation(
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
+    metformin_risk: dict,
 ) -> dict:
     renal_flag = renal_risk.get("flag")
     pregnancy_flag = pregnancy_risk.get("flag")
     contrast_flag = contrast_reaction_risk.get("flag")
+    metformin_flag = metformin_risk.get("flag")
     action = overall_decision.get("recommended_action")
+    cautionary_notes = overall_decision.get("cautionary_notes")
 
     if action == "hold_and_clarify":
         return {
@@ -31,6 +34,10 @@ def generate_protocol_recommendation(
         if contrast_flag == "high_contrast_reaction_risk":
             next_steps.append("Review severe prior contrast reaction history before proceeding.")
             next_steps.append("Consider non-contrast imaging or alternative modality if appropriate.")
+        
+        if metformin_flag == "metformin_risk_hold_required":
+            next_steps.append("Review Metformin use and eGFR before proceeding.")
+            next_steps.append("Consider holding Metformin and monitoring renal function post-scan if proceeding with contrast-enhanced CT.")
 
         return {
             "suggested_protocol": "hold_contrast_exam_and_review",
@@ -55,6 +62,10 @@ def generate_protocol_recommendation(
 
         if contrast_flag == "contrast_reaction_history_unknown":
             next_steps.append("Clarify prior contrast reaction history before proceeding.")
+
+        if metformin_flag == "metformin_risk_low_review_recommended":
+            next_steps.append("Review Metformin use and eGFR before proceeding.")
+            next_steps.append("Monitor renal function post-scan if proceeding with contrast-enhanced CT.")
 
         return {
             "suggested_protocol": "conditional_contrast_protocol",
