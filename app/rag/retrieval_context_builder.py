@@ -8,6 +8,7 @@ def build_retrieval_queries(
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
     metformin_risk: dict,
+    thyroid_risk: dict,
     overall_decision: dict,
     protocol_recommendation: dict,
 ) -> list[dict]:
@@ -93,6 +94,18 @@ def build_retrieval_queries(
                 f"Patient is on metformin: {case.metformin_use.value}. "
                 "Iodinated contrast use in patients on metformin, renal function monitoring, "
                 "precautions and contraindications."
+            )
+        })
+    
+    thyroid_flag = thyroid_risk.get("flag")
+    if thyroid_flag in {"hyperthyroid_contrast_risk", "autonomous_nodule_contrast_risk"}:
+        queries.append({
+            "topic": "thyroid",
+            "query": (
+                f"{common_context} "
+                f"Patient thyroid status: {case.thyroid_status.value}. "
+                "Iodinated contrast use in patients with thyroid conditions, hyperthyroidism, "
+                "autonomous nodules, endocrinology consultation, precautions before proceeding."
             )
         })
 

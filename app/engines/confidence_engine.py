@@ -11,7 +11,8 @@ def derive_active_topics_and_claims(
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
-    metformin_risk: dict
+    metformin_risk: dict,
+    thyroid_risk: dict,
 ) -> Tuple[List[str], List[str]]:
     active_topics = []
     active_claims = []
@@ -36,6 +37,9 @@ def derive_active_topics_and_claims(
         active_topics.append("metformin")
         active_claims.append("metformin_risk")
 
+    if thyroid_risk.get("flag") in {"hyperthyroid_contrast_risk", "autonomous_nodule_contrast_risk"}:
+        active_topics.append("thyroid")
+        active_claims.append("thyroid_risk")
     # Missing information is intentionally NOT added as an active claim/topic.
     # It is handled through completeness confidence, not retrieval/citation support.
 
@@ -48,6 +52,7 @@ def compute_rule_confidence(
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
     metformin_risk: dict,
+    thyroid_risk: dict,
     overall_decision: dict,
 ) -> ConfidenceComponent:
     reasons = []
@@ -64,7 +69,8 @@ def compute_rule_confidence(
         renal_risk.get("flag") == "high_renal_risk",
         pregnancy_risk.get("flag") == "pregnancy_risk_review_required",
         contrast_reaction_risk.get("flag") == "high_contrast_reaction_risk",
-        metformin_risk.get("flag") == "metformin_risk_hold_required",   
+        metformin_risk.get("flag") == "metformin_risk_hold_required",
+        thyroid_risk.get("flag") in {"hyperthyroid_contrast_risk", "autonomous_nodule_contrast_risk"},
     ]
 
     active_moderate_flags = [
@@ -76,6 +82,7 @@ def compute_rule_confidence(
             "contrast_reaction_history_unknown",
         },
         metformin_risk.get("flag") == "metformin_risk_low_review_recommended",
+        thyroid_risk.get("flag") in {"hyperthyroid_contrast_risk", "autonomous_nodule_contrast_risk"},
     ]
 
     if any(active_high_flags):
@@ -261,6 +268,7 @@ def build_confidence(
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
     metformin_risk: dict,
+    thyroid_risk: dict,
     overall_decision: dict,
     retrieved_guideline_evidence,
     explanation: dict,
@@ -271,6 +279,7 @@ def build_confidence(
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
         metformin_risk=metformin_risk,
+        thyroid_risk=thyroid_risk,
     )
 
     rule_conf = compute_rule_confidence(
@@ -279,6 +288,7 @@ def build_confidence(
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
         metformin_risk=metformin_risk,
+        thyroid_risk=thyroid_risk,
         overall_decision=overall_decision,
     )
 

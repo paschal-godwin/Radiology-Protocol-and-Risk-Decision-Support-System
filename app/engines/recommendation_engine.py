@@ -5,14 +5,16 @@ def generate_protocol_recommendation(
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
     metformin_risk: dict,
+    thyroid_risk: dict,
 ) -> dict:
     renal_flag = renal_risk.get("flag")
     pregnancy_flag = pregnancy_risk.get("flag")
     contrast_flag = contrast_reaction_risk.get("flag")
     metformin_flag = metformin_risk.get("flag")
+    thyroid_flag = thyroid_risk.get("flag")
     action = overall_decision.get("recommended_action")
-    cautionary_notes = overall_decision.get("cautionary_notes")
-
+    contrast_medication_precautions = overall_decision.get("contrast_medication_precautions", [])
+    
     if action == "hold_and_clarify":
         return {
             "suggested_protocol": "do_not_proceed_yet",
@@ -38,6 +40,10 @@ def generate_protocol_recommendation(
         if metformin_flag == "metformin_risk_hold_required":
             next_steps.append("Review Metformin use and eGFR before proceeding.")
             next_steps.append("Consider holding Metformin and monitoring renal function post-scan if proceeding with contrast-enhanced CT.")
+
+        if thyroid_flag == "hyperthyroid_contrast_risk":
+            next_steps.append("Review thyroid status and consider endocrinology consultation before proceeding with contrast.")
+            next_steps.append("Consider non-contrast imaging or alternative modality if appropriate.")
 
         return {
             "suggested_protocol": "hold_contrast_exam_and_review",
@@ -66,6 +72,10 @@ def generate_protocol_recommendation(
         if metformin_flag == "metformin_risk_low_review_recommended":
             next_steps.append("Review Metformin use and eGFR before proceeding.")
             next_steps.append("Monitor renal function post-scan if proceeding with contrast-enhanced CT.")
+
+        if thyroid_flag == "autonomous_nodule_contrast_risk":
+            next_steps.append("Review thyroid status and consider endocrinology consultation before proceeding with contrast.")
+            next_steps.append("Consider non-contrast imaging or alternative modality if appropriate.")
 
         return {
             "suggested_protocol": "conditional_contrast_protocol",

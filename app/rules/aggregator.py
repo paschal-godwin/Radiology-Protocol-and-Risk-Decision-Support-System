@@ -3,12 +3,14 @@ def generate_overall_decision(
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
-    metformin_risk: dict
+    metformin_risk: dict,
+    thyroid_risk: dict
 ) -> dict:
     renal_flag = renal_risk.get("flag")
     pregnancy_flag = pregnancy_risk.get("flag")
     contrast_flag = contrast_reaction_risk.get("flag")
     metformin_flag = metformin_risk.get("flag")
+    thyroid_flag = thyroid_risk.get("flag")     
     metformin_message= metformin_risk.get("post_scan_instructions")
 
     if missing_information:
@@ -24,6 +26,7 @@ def generate_overall_decision(
         or pregnancy_flag == "pregnancy_risk_review_required"
         or contrast_flag == "high_contrast_reaction_risk"
         or metformin_flag == "metformin_risk_hold_required"
+        or thyroid_flag == "hyperthyroid_contrast_risk"
     ):
         return {
             "overall_risk_level": "high",
@@ -42,6 +45,7 @@ def generate_overall_decision(
             "contrast_reaction_history_unknown",
         ]
         or metformin_flag == "metformin_risk_low_review_recommended"
+        or thyroid_flag == "autonomous_nodule_contrast_risk"
     ):
         return {
             "overall_risk_level": "moderate",

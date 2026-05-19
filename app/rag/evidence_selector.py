@@ -18,7 +18,10 @@ TOPIC_KEYWORDS = {
     ],
     "metformin": [
         "metformin", "diabetes", "type 2 diabetes", "renal function", "contrast"
-    ]
+    ],
+    "thyroid": [
+        "thyroid", "hyperthyroidism", "autonomous nodule", "endocrinology", "contrast"
+    ]           
 }
 
 # NEW:
@@ -76,6 +79,15 @@ CLAIM_KEYWORDS = {
         "acute kidney injury",
         "CKD",
         "hold metformin",
+    ],
+    "thyroid": [
+        "thyroid",
+        "hyperthyroidism",
+        "autonomous nodule",
+        "endocrinology",
+        "contrast",
+        "review before proceeding",
+        "caution",
     ]
 }
 
@@ -171,7 +183,7 @@ def compute_selection_score(item: GuidelineEvidence) -> float:
 
 def select_best_evidence_per_topic(
     evidence_items: List[GuidelineEvidence],
-    max_total_items: int = 2,
+    max_total_items: int | None = None,   
 ) -> List[GuidelineEvidence]:
     """
     Select the strongest evidence item per topic first,
@@ -181,6 +193,9 @@ def select_best_evidence_per_topic(
 
     for item in evidence_items:
         grouped[item.topic or "general"].append(item)
+
+    if max_total_items is None:
+        max_total_items = len(grouped)
 
     for _, items in grouped.items():
         items.sort(key=compute_selection_score)

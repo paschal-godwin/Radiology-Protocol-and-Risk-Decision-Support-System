@@ -20,6 +20,7 @@ from app.schemas.input import (  # noqa: E402
     UrgencyLevel,
     DiabetesStatus,
     MetforminUse,
+    ThyroidStatus,
 )
 from app.services.assessment_service import run_assessment  # noqa: E402
 
@@ -48,6 +49,7 @@ def initialize_state():
         "loaded_demo_name": "None",
         "diabetes_status": "unknown",
         "metformin_use": "unknown",
+        "thyroid_status": "unknown",
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -75,6 +77,9 @@ def load_demo_into_state(case_name: str):
     st.session_state["sex"] = demo["sex"]
     st.session_state["exam"] = demo["exam_requested"]
     st.session_state["contrast"] = demo["contrast_requested"]
+    st.session_state["diabetes"] = demo["diabetes_status"]
+    st.session_state["metformin"] = demo["metformin_use"]
+    st.session_state["thyroid"] = demo["thyroid_status"]
     st.session_state["urgency"] = demo["urgency_level"]
     st.session_state["allergy"] = (
         "unknown"
@@ -189,6 +194,29 @@ def render_badge(
         unsafe_allow_html=True,
     )
 
+def render_medication_precautions(precautions: list):
+    if not precautions:
+        return
+
+    st.markdown("#### ⚠️ Contrast-Related Clinical Precautions")
+
+    for item in precautions:
+        medication = safe_get(item, "medication", "Medication")
+        flag = safe_get(item, "flag", "")
+        message = safe_get(item, "message", "")
+        post_scan_instructions = safe_get(item, "post_scan_instructions", "")
+
+        st.warning(
+            f"""
+**{medication}**
+
+{message}
+
+**Post-scan instruction:** {post_scan_instructions}
+
+`{flag}`
+            """
+        )
 
 def format_confidence_label(score: float, label: str) -> str:
     return f"{label.title()} ({score:.2f})"
@@ -289,7 +317,11 @@ def build_case_input_from_form() -> RadiologyCaseInput | None:
             options=[member.value for member in MetforminUse],
             key="metformin",
         )
-
+        thyroid_status = st.selectbox(
+            "Thyroid Status",
+            options=[member.value for member in ThyroidStatus],
+            key="thyroid",
+        )
 
     with col3:
         egfr_input = st.text_input(
@@ -353,6 +385,8 @@ def build_case_input_from_form() -> RadiologyCaseInput | None:
         prior_contrast_reaction=PriorContrastReaction(prior_contrast_reaction),
         diabetes_status=DiabetesStatus(diabetes_status),
         metformin_use=MetforminUse(metformin_use),
+        thyroid_status=ThyroidStatus(thyroid_status),
+        
     )
 
 
@@ -410,7 +444,9 @@ def render_assessment(result: dict):
     with left:
         st.subheader("Why the System Made This Decision")
         st.write(safe_get(explanation, "reasoning_summary", ""))
-
+        contrast_medication_precautions = result.get("contrast_medication_precautions", [])
+        
+        render_medication_precautions(contrast_medication_precautions)
 
         rule_based_factors = safe_get(explanation, "rule_based_factors", [])
         if rule_based_factors:
@@ -501,6 +537,9 @@ def load_demo_case(case_name: str) -> dict:
             "egfr": 20.0,
             "allergy_history": True,
             "prior_contrast_reaction": "severe",
+            "thyroid_status": "normal",
+            "diabetes_status": "non_diabetic",
+            "metformin_use": "no",
         },
         "Pregnancy Review Case": {
             "age": 31,
@@ -512,6 +551,9 @@ def load_demo_case(case_name: str) -> dict:
             "egfr": 90.0,
             "allergy_history": False,
             "prior_contrast_reaction": "none",
+            "thyroid_status": "normal",
+            "diabetes_status": "non_diabetic",
+            "metformin_use": "no",
         },
         "Low Risk Proceed Case": {
             "age": 39,
@@ -523,6 +565,9 @@ def load_demo_case(case_name: str) -> dict:
             "egfr": 88.0,
             "allergy_history": False,
             "prior_contrast_reaction": "none",
+            "thyroid_status": "normal",
+            "diabetes_status": "non_diabetic",
+            "metformin_use": "no",
         },
     }
     return demos[case_name]

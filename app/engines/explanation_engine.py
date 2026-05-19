@@ -26,6 +26,7 @@ def generate_explanation(
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
     metformin_risk: dict,
+    thyroid_risk: dict,
     overall_decision: dict,
     protocol_recommendation: dict,
     retrieved_guideline_evidence: RetrievedGuidelineEvidence | None = None,
@@ -71,7 +72,7 @@ def generate_explanation(
     reaction_citation = None
     pregnancy_citation = None
     metformin_citation = None
-
+    thyroid_citation = None
     if retrieved_guideline_evidence and retrieved_guideline_evidence.evidence_items:
         if renal_risk.get("flag") in {"high_renal_risk", "moderate_renal_risk"}:
             renal_citation = _get_best_citation_by_topic(retrieved_guideline_evidence, "renal")
@@ -93,6 +94,11 @@ def generate_explanation(
         if metformin_risk.get("flag") in {"metformin_risk_hold_required", "metformin_risk_low_review_recommended"}:
             metformin_citation = _get_best_citation_by_topic(
                 retrieved_guideline_evidence, "metformin"
+            )
+
+        if thyroid_risk.get("flag") in {"hyperthyroid_contrast_risk", "autonomous_nodule_contrast_risk"}:
+            thyroid_citation = _get_best_citation_by_topic(
+                retrieved_guideline_evidence, "thyroid"
             )
 
     if renal_citation:
@@ -152,6 +158,21 @@ def generate_explanation(
                 page_number=metformin_citation.page_number,
                 section=metformin_citation.section,
                 snippet=metformin_citation.snippet,
+            )
+        )
+
+    if thyroid_citation:
+        evidence_lines.append(
+            f"Thyroid-related support was retrieved from {_build_citation_label(thyroid_citation)}."
+        )
+        citations.append(
+            ExplanationCitation(
+                claim="thyroid_risk",
+                topic=thyroid_citation.topic,
+                source_title=thyroid_citation.source_title,
+                page_number=thyroid_citation.page_number,
+                section=thyroid_citation.section,
+                snippet=thyroid_citation.snippet,
             )
         )
 

@@ -39,6 +39,11 @@ class MetforminUse(str, Enum):
     no = "no"
     unknown = "unknown"
 
+class ThyroidStatus(str, Enum):
+    normal = "normal"
+    hyperthyroid = "hyperthyroid"
+    autonomous_nodule = "autonomous_nodule"
+    unknown = "unknown"
 
 class RadiologyCaseInput(BaseModel):
     
@@ -58,3 +63,4 @@ class RadiologyCaseInput(BaseModel):
     prior_contrast_reaction: PriorContrastReaction = PriorContrastReaction.none
     diabetes_status: DiabetesStatus = DiabetesStatus.unknown
     metformin_use: MetforminUse = MetforminUse.unknown
+    thyroid_status: ThyroidStatus = ThyroidStatus.unknown

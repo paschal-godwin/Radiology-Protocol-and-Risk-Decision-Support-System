@@ -81,6 +81,7 @@ class RuleTrace(BaseModel):
     pregnancy_flag: Optional[str] = None
     contrast_reaction_flag: Optional[str] = None
     metformin_flag: Optional[str] = None
+    thyroid_flag: Optional[str] = None
     active_topics: List[str] = []
     active_claims: List[str] = []
 
@@ -121,6 +122,12 @@ class RetrievalTopicTrace(BaseModel):
     query: str
     candidates: List[RetrievalCandidateTrace] = []
 
+class MedicationPrecaution(BaseModel):
+    medication: str
+    flag: Optional[str] = None
+    message: str
+    post_scan_instructions: Optional[str] = None
+
 
 class DebugTrace(BaseModel):
     rule_trace: RuleTrace
@@ -136,6 +143,8 @@ class AssessmentResponse(BaseModel):
     pregnancy_risk: RiskAssessmentResult
     contrast_reaction_risk: RiskAssessmentResult
     metformin_risk: RiskAssessmentResult
+    thyroid_risk: RiskAssessmentResult
+    contrast_medication_precautions: List[MedicationPrecaution] = []
     overall_decision: OverallDecision
     protocol_recommendation: ProtocolRecommendation
     explanation: ExplanationResult

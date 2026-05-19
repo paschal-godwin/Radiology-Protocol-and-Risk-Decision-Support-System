@@ -3,6 +3,7 @@ from app.rules.renal import assess_renal_risk
 from app.rules.pregnancy import assess_pregnancy_risk
 from app.rules.contrast_reaction import assess_contrast_reaction_risk
 from app.rules.metformin import assess_metformin_risk
+from app.rules.thyroid import assess_thyroid_risk
 from app.rules.aggregator import generate_overall_decision
 from app.engines.recommendation_engine import generate_protocol_recommendation
 from app.engines.explanation_engine import generate_explanation
@@ -14,6 +15,41 @@ from app.engines.confidence_engine import (
     build_confidence,
 )
 
+def build_contrast_medication_precautions(
+    metformin_risk: dict,
+    thyroid_risk: dict,
+) -> list[dict]:
+    precautions = []
+
+    metformin_flag = metformin_risk.get("flag")
+    thyroid_flag = thyroid_risk.get("flag")
+    post_scan_instructions = metformin_risk.get("post_scan_instructions")
+
+    if metformin_flag in {
+        "metformin_risk_hold_required",
+        "metformin_risk_low_review_recommended",
+        "metformin_use_unknown",
+    }:
+        precautions.append({
+            "medication": "Metformin",
+            "flag": metformin_flag,
+            "message": metformin_risk.get("message", ""),
+            "post_scan_instructions": post_scan_instructions,
+        })
+
+    if thyroid_flag in {
+        "hyperthyroid_contrast_risk",
+        "autonomous_nodule_contrast_risk",
+    }:
+        precautions.append({
+            "medication": "Thyroid Condition",
+            "flag": thyroid_flag,
+            "message": thyroid_risk.get("message", ""),
+            "post_scan_instructions": None,
+        })
+
+    return precautions
+
 
 def run_assessment(case: RadiologyCaseInput) -> dict:
     missing_info = detect_missing_information(case)
@@ -21,12 +57,18 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
     pregnancy_risk = assess_pregnancy_risk(case)
     contrast_reaction_risk = assess_contrast_reaction_risk(case)
     metformin_risk = assess_metformin_risk(case)
+    thyroid_risk = assess_thyroid_risk(case)
+    contrast_medication_precautions = (build_contrast_medication_precautions(
+        metformin_risk=metformin_risk,
+        thyroid_risk=thyroid_risk,
+    ))
     overall_decision = generate_overall_decision(
         missing_information=missing_info,
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
         metformin_risk=metformin_risk,
+        thyroid_risk=thyroid_risk,
     )
     
 
@@ -37,6 +79,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
         metformin_risk=metformin_risk,
+        thyroid_risk=thyroid_risk,
     )
 
     retrieval_queries = build_retrieval_queries(
@@ -45,15 +88,40 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
-        metformin_risk=metformin_risk,      
+        metformin_risk=metformin_risk,
+        thyroid_risk=thyroid_risk,
         overall_decision=overall_decision,
         protocol_recommendation=protocol_recommendation,
     )
 
+    active_topics, active_claims = derive_active_topics_and_claims(
+        missing_information=missing_info,
+        renal_risk=renal_risk,
+        pregnancy_risk=pregnancy_risk,
+        contrast_reaction_risk=contrast_reaction_risk,
+        metformin_risk=metformin_risk,
+        thyroid_risk=thyroid_risk,
+    )   
+
+
+    citation_required_claims = [
+        claim for claim in active_claims
+        if claim in {
+            "renal_risk",
+            "contrast_reaction_risk",
+            "pregnancy_risk",
+            "metformin_risk",
+            "thyroid_risk",
+        }
+    ]
+
+    max_total_items = max(2, len(citation_required_claims))
+ 
+
     retrieved_guideline_evidence, retrieval_topic_traces = retrieve_guideline_evidence(
         queries=retrieval_queries,
         per_query_k=3,
-        max_total_items=2,
+        max_total_items=max_total_items,
     )
 
     explanation = generate_explanation(
@@ -63,25 +131,20 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
         metformin_risk=metformin_risk,
+        thyroid_risk=thyroid_risk,
         overall_decision=overall_decision,
         protocol_recommendation=protocol_recommendation,
         retrieved_guideline_evidence=retrieved_guideline_evidence,
     )
 
-    active_topics, active_claims = derive_active_topics_and_claims(
-        missing_information=missing_info,
-        renal_risk=renal_risk,
-        pregnancy_risk=pregnancy_risk,
-        contrast_reaction_risk=contrast_reaction_risk,
-        metformin_risk=metformin_risk,
-    )
-
+    
     confidence = build_confidence(
         missing_information=missing_info,
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
         metformin_risk=metformin_risk,
+        thyroid_risk=thyroid_risk,
         overall_decision=overall_decision,
         retrieved_guideline_evidence=retrieved_guideline_evidence,
         explanation=explanation,
@@ -128,6 +191,8 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
             "renal_flag": renal_risk.get("flag"),
             "pregnancy_flag": pregnancy_risk.get("flag"),
             "contrast_reaction_flag": contrast_reaction_risk.get("flag"),
+            "metformin_flag": metformin_risk.get("flag"),
+            "thyroid_flag": thyroid_risk.get("flag"),
             "active_topics": active_topics,
             "active_claims": active_claims,
         },
@@ -143,6 +208,8 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         "pregnancy_risk": pregnancy_risk,
         "contrast_reaction_risk": contrast_reaction_risk,
         "metformin_risk": metformin_risk,
+        "thyroid_risk": thyroid_risk,
+        "contrast_medication_precautions": contrast_medication_precautions,
         "overall_decision": overall_decision,
         "protocol_recommendation": protocol_recommendation,
         "explanation": explanation,
