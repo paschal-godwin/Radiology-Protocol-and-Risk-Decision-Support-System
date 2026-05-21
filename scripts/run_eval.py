@@ -16,7 +16,7 @@ load_dotenv()
 
 EVAL_CASES = [
     {
-        "name": "high_renal_only",
+        "name": "high_renal_and_unknown_thyroid",
         "input": {
             "age": 68,
             "sex": "male",
@@ -26,20 +26,25 @@ EVAL_CASES = [
             "urgency_level": "routine",
             "egfr": 22.0,
             "allergy_history": False,
-            "prior_contrast_reaction": "none"
+            "prior_contrast_reaction": "none",
+            "diabetes_status": "non_diabetic",
+            "thyroid_status": "unknown",
+            "metformin_use": "no"
         },
         "expected": {
             "expected_overall_risk": "high",
             "expected_action": "hold_and_review",
-            "expected_claims": ["renal_risk"],
-            "expected_topics": ["renal"],
+            "expected_claims": ["renal_risk", "thyroid_risk"],
+            "expected_topics": ["renal", "thyroid"],
 
             # NEW: lightweight evidence-quality expectations
             "expected_primary_source_title_by_claim": {
-                "renal_risk": "CT imaging_guidelines"
+                "renal_risk": "CT imaging_guidelines",
+                "thyroid_risk": "ACR-Manual-on-Contrast-Media"
             },
             "expected_primary_topic_by_claim": {
-                "renal_risk": "renal"
+                "renal_risk": "renal",
+                "thyroid_risk": "thyroid"
             },
             "manual_evidence_quality": "acceptable"
         }
@@ -55,7 +60,10 @@ EVAL_CASES = [
             "urgency_level": "routine",
             "egfr": 78.0,
             "allergy_history": True,
-            "prior_contrast_reaction": "severe"
+            "prior_contrast_reaction": "severe",
+            "diabetes_status": "non_diabetic",
+            "thyroid_status": "normal",
+            "metformin_use": "no"
         },
         "expected": {
             "expected_overall_risk": "high",
@@ -83,21 +91,26 @@ EVAL_CASES = [
             "urgency_level": "routine",
             "egfr": 20.0,
             "allergy_history": True,
-            "prior_contrast_reaction": "severe"
+            "prior_contrast_reaction": "severe",
+            "thyroid_status": "unknown",
+            "metformin_use": "no",
+            "diabetes_status": "non_diabetic"
         },
         "expected": {
             "expected_overall_risk": "high",
             "expected_action": "hold_and_review",
-            "expected_claims": ["renal_risk", "contrast_reaction_risk"],
-            "expected_topics": ["renal", "contrast_reaction"],
+            "expected_claims": ["renal_risk", "contrast_reaction_risk", "thyroid_risk"],
+            "expected_topics": ["renal", "contrast_reaction", "thyroid"],
 
             "expected_primary_source_title_by_claim": {
                 "renal_risk": "CT imaging_guidelines",
-                "contrast_reaction_risk": "ACR-Manual-on-Contrast-Media"
+                "contrast_reaction_risk": "ACR-Manual-on-Contrast-Media",
+                "thyroid_risk": "ACR-Manual-on-Contrast-Media"
             },
             "expected_primary_topic_by_claim": {
                 "renal_risk": "renal",
-                "contrast_reaction_risk": "contrast_reaction"
+                "contrast_reaction_risk": "contrast_reaction",
+                "thyroid_risk": "thyroid"
             },
             "manual_evidence_quality": "acceptable"
         }
@@ -113,7 +126,10 @@ EVAL_CASES = [
             "urgency_level": "routine",
             "egfr": 90.0,
             "allergy_history": False,
-            "prior_contrast_reaction": "none"
+            "prior_contrast_reaction": "none",
+            "thyroid_status": "normal",
+            "metformin_use": "no",
+            "diabetes_status": "non_diabetic"
         },
         "expected": {
             "expected_overall_risk": "high",
@@ -141,7 +157,10 @@ EVAL_CASES = [
             "urgency_level": "routine",
             "egfr": None,
             "allergy_history": False,
-            "prior_contrast_reaction": "none"
+            "prior_contrast_reaction": "none",
+            "thyroid_status": "normal",
+            "metformin_use": "no",
+            "diabetes_status": "non_diabetic"
         },
         "expected": {
             "expected_overall_risk": "insufficient_information",
@@ -166,7 +185,10 @@ EVAL_CASES = [
             "urgency_level": "routine",
             "egfr": 88.0,
             "allergy_history": False,
-            "prior_contrast_reaction": "none"
+            "prior_contrast_reaction": "none",
+            "thyroid_status": "normal",
+            "metformin_use": "no",
+            "diabetes_status": "non_diabetic"
         },
         "expected": {
             "expected_overall_risk": "low",
@@ -183,7 +205,7 @@ EVAL_CASES = [
 
 
 def normalize_list(values):
-    return sorted(values) if values else []
+    return sorted(set(v for v in values if v)) if values else []
 
 
 def extract_claims(citations):
@@ -282,18 +304,59 @@ def evaluate_evidence_expectations(expected, primary_citations_by_claim):
     }
 
 
-def build_failure_types(risk_ok, action_ok, claims_ok, topics_ok, evidence_expectation_ok):
+def build_failure_types(
+    risk_ok,
+    action_ok,
+    actual_claims,
+    expected_claims,
+    actual_topics,
+    expected_topics,
+    evidence_eval,
+    confidence=None,
+):
     failures = []
+
     if not risk_ok:
         failures.append("decision_error")
+
     if not action_ok:
         failures.append("action_error")
-    if not claims_ok:
-        failures.append("claim_alignment_error")
-    if not topics_ok:
-        failures.append("citation_topic_mismatch")
-    if not evidence_expectation_ok:
-        failures.append("evidence_expectation_mismatch")
+
+    actual_claim_set = set(actual_claims or [])
+    expected_claim_set = set(expected_claims or [])
+
+    missing_claims = sorted(expected_claim_set - actual_claim_set)
+    extra_claims = sorted(actual_claim_set - expected_claim_set)
+
+    if missing_claims:
+        failures.append("missing_expected_claim")
+
+    if extra_claims:
+        failures.append("unexpected_extra_claim")
+
+    actual_topic_set = set(actual_topics or [])
+    expected_topic_set = set(expected_topics or [])
+
+    missing_topics = sorted(expected_topic_set - actual_topic_set)
+    extra_topics = sorted(actual_topic_set - expected_topic_set)
+
+    if missing_topics:
+        failures.append("missing_expected_topic")
+
+    if extra_topics:
+        failures.append("unexpected_extra_topic")
+
+    if not evidence_eval.get("source_ok", True):
+        failures.append("wrong_evidence_source")
+
+    if not evidence_eval.get("topic_ok", True):
+        failures.append("wrong_evidence_topic")
+
+    if confidence:
+        final_confidence = getattr(confidence, "final_confidence", None)
+        if final_confidence is not None and final_confidence < 0.70:
+            failures.append("low_confidence_warning")
+
     return failures
 
 
@@ -305,6 +368,90 @@ def make_json_safe(value):
     if isinstance(value, dict):
         return {k: make_json_safe(v) for k, v in value.items()}
     return value
+
+def build_metric_summary(results):
+    total = len(results)
+
+    if total == 0:
+        return {}
+
+    decision_passes = sum(1 for r in results if r["checks"]["risk_ok"])
+    action_passes = sum(1 for r in results if r["checks"]["action_ok"])
+    claims_passes = sum(1 for r in results if r["checks"]["claims_ok"])
+    topics_passes = sum(1 for r in results if r["checks"]["topics_ok"])
+    evidence_passes = sum(1 for r in results if r["checks"]["evidence_expectation_ok"])
+
+    confidence_scores = []
+    low_confidence_cases = []
+
+    for r in results:
+        confidence = r.get("confidence") or {}
+        final_confidence = confidence.get("final_confidence")
+
+        if final_confidence is not None:
+            confidence_scores.append(final_confidence)
+
+            if final_confidence < 0.70:
+                low_confidence_cases.append({
+                    "case_name": r["case_name"],
+                    "final_confidence": final_confidence,
+                    "confidence_label": confidence.get("confidence_label"),
+                    "capped_by": confidence.get("capped_by"),
+                })
+
+    failure_type_counts = {}
+
+    for r in results:
+        for failure_type in r.get("failure_types", []):
+            failure_type_counts[failure_type] = failure_type_counts.get(failure_type, 0) + 1
+
+    average_confidence = (
+        round(sum(confidence_scores) / len(confidence_scores), 4)
+        if confidence_scores
+        else None
+    )
+
+    return {
+        "decision_pass_rate": round(decision_passes / total, 4),
+        "action_pass_rate": round(action_passes / total, 4),
+        "claims_pass_rate": round(claims_passes / total, 4),
+        "topics_pass_rate": round(topics_passes / total, 4),
+        "evidence_expectation_pass_rate": round(evidence_passes / total, 4),
+        "average_final_confidence": average_confidence,
+        "low_confidence_cases": low_confidence_cases,
+        "failure_type_counts": failure_type_counts,
+    }
+
+def build_debug_summary(case_result):
+    actual = case_result.get("actual", {})
+    confidence = case_result.get("confidence") or {}
+    debug_trace = case_result.get("debug_trace") or {}
+
+    selected_evidence = debug_trace.get("selected_evidence") or []
+    retrieval_queries = debug_trace.get("retrieval_queries") or []
+
+    active_claims = actual.get("claims") or []
+    active_topics = actual.get("topics") or []
+
+    final_confidence = confidence.get("final_confidence")
+    capped_by = confidence.get("capped_by")
+
+    if case_result.get("pass"):
+        main_debug_note = "Case passed expected decision, action, claims, and topic checks."
+    elif case_result.get("failure_types"):
+        main_debug_note = f"Case failed with: {', '.join(case_result['failure_types'])}."
+    else:
+        main_debug_note = "Case failed, but no failure type was assigned."
+
+    return {
+        "active_topics": active_topics,
+        "active_claims": active_claims,
+        "selected_evidence_count": len(selected_evidence),
+        "retrieval_query_count": len(retrieval_queries),
+        "confidence_capped_by": capped_by,
+        "final_confidence": final_confidence,
+        "main_debug_note": main_debug_note,
+    }
 
 
 def main():
@@ -345,17 +492,22 @@ def main():
         if overall_ok:
             pass_count += 1
 
-        failure_types = build_failure_types(
-            risk_ok=risk_ok,
-            action_ok=action_ok,
-            claims_ok=claims_ok,
-            topics_ok=topics_ok,
-            evidence_expectation_ok=evidence_expectation_ok,
-        )
-
         confidence = result.get("confidence")
         debug_trace = result.get("debug_trace", {})
 
+
+        failure_types = build_failure_types(
+            risk_ok=risk_ok,
+            action_ok=action_ok,
+            actual_claims=actual_claims,
+            expected_claims=expected["expected_claims"],
+            actual_topics=actual_topics,
+            expected_topics=expected["expected_topics"],
+            evidence_eval=evidence_eval,
+            confidence=confidence,
+        )
+
+        
         case_result = {
             "case_name": name,
             "pass": overall_ok,
@@ -380,6 +532,7 @@ def main():
             "confidence": make_json_safe(confidence),
             "debug_trace": make_json_safe(debug_trace),
         }
+        case_result["debug_summary"] = build_debug_summary(case_result)
 
         results.append(case_result)
 
@@ -405,6 +558,8 @@ def main():
         if failure_types:
             print(f"failure_types: {failure_types}")
 
+    metric_summary = build_metric_summary(results)
+
     summary = {
         "total_cases": len(EVAL_CASES),
         "passed_cases": pass_count,
@@ -412,6 +567,7 @@ def main():
         "pass_rate": round(pass_count / len(EVAL_CASES), 4),
         "evidence_expectation_passed_cases": evidence_expectation_pass_count,
         "evidence_expectation_pass_rate": round(evidence_expectation_pass_count / len(EVAL_CASES), 4),
+        "metric_summary": metric_summary,
         "results": results,
     }
 

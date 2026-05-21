@@ -88,20 +88,46 @@ The app can distinguish between:
 
 It can also explain why a case was blocked, which topic triggered the decision, and which evidence supported the explanation.
 
-## Evaluation
+## Evaluation & Observability
 
-V1 includes an evaluation set covering:
-- high renal risk only
-- severe contrast reaction only
-- combined renal + severe reaction
-- pregnancy review case
-- missing eGFR / insufficient information
-- low-risk proceed case
+This system includes a lightweight evaluation and regression-testing layer for clinical decision support reliability.
 
-Current status:
-- **6/6 cases passing**
-- evidence expectations reviewed for selected key cases
-- manual evidence-quality labels included as reviewer notes (`strong`, `acceptable`, `not_applicable`)
+### Evaluation Checks
+
+Each test case validates:
+
+- overall risk decision
+- recommended action
+- expected clinical claims
+- expected retrieval topics
+- expected evidence source
+- expected citation topic
+- confidence behavior
+- failure type classification
+
+### Debug Traces
+
+Each assessment includes:
+
+- deterministic rule trace
+- retrieval queries
+- selected guideline evidence
+- retrieval topic traces
+- confidence breakdown
+- human-readable debug summary
+
+### Regression Testing
+
+The system compares:
+
+- `baseline_run.json`
+- `latest_run.json`
+
+and generates:
+
+- `comparison_report.json`
+
+to detect pass/fail changes, confidence drops, changed outputs, and regression risks.
 
 ## Why this is not a chatbot
 

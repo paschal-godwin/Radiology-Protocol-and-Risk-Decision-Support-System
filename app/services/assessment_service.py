@@ -36,6 +36,7 @@ def build_contrast_medication_precautions(
             "message": metformin_risk.get("message", ""),
             "post_scan_instructions": post_scan_instructions,
         })
+        
 
     if thyroid_flag in {
         "hyperthyroid_contrast_risk",
