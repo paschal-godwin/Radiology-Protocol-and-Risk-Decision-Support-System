@@ -46,6 +46,7 @@ EVAL_CASES = [
                 "renal_risk": "renal",
                 "thyroid_risk": "thyroid"
             },
+            "expected_multi_risk_escalation": True,
             "manual_evidence_quality": "acceptable"
         }
     },
@@ -112,6 +113,7 @@ EVAL_CASES = [
                 "contrast_reaction_risk": "contrast_reaction",
                 "thyroid_risk": "thyroid"
             },
+            "expected_multi_risk_escalation": True,
             "manual_evidence_quality": "acceptable"
         }
     },
@@ -172,6 +174,79 @@ EVAL_CASES = [
             "expected_primary_source_title_by_claim": {},
             "expected_primary_topic_by_claim": {},
             "manual_evidence_quality": "not_applicable"
+        }
+    },
+    {
+        "name": "emergency_high_renal_risk_override",
+        "input": {
+            "age": 70,
+            "sex": "male",
+            "pregnancy_status": "not_applicable",
+            "exam_requested": "CT",
+            "contrast_requested": True,
+            "urgency_level": "emergency",
+            "egfr": 22.0,
+            "allergy_history": False,
+            "prior_contrast_reaction": "none",
+            "diabetes_status": "non_diabetic",
+            "metformin_use": "no",
+            "thyroid_status": "normal"
+        },
+        "expected": {
+            "expected_overall_risk": "high",
+            "expected_action": "urgent_radiologist_review",
+            "expected_claims": ["renal_risk"],
+            "expected_topics": ["renal"],
+            "expected_primary_source_title_by_claim": {
+                "renal_risk": "CT imaging_guidelines"
+            },
+            "expected_primary_topic_by_claim": {
+                "renal_risk": "renal"
+            },
+            "manual_evidence_quality": "acceptable"
+        }
+    },
+    {
+        "name": "multi_risk_escalation_case",
+        "input": {
+            "age": 66,
+            "sex": "male",
+            "pregnancy_status": "not_applicable",
+            "exam_requested": "CT",
+            "contrast_requested": True,
+            "urgency_level": "routine",
+            "egfr": 24.0,
+            "allergy_history": True,
+            "prior_contrast_reaction": "severe",
+            "diabetes_status": "diabetic",
+            "metformin_use": "yes",
+            "thyroid_status": "normal"
+        },
+        "expected": {
+            "expected_overall_risk": "high",
+            "expected_action": "hold_and_review",
+            "expected_claims": [
+                "renal_risk",
+                "contrast_reaction_risk",
+                "metformin_risk"
+            ],
+            "expected_topics": [
+                "renal",
+                "contrast_reaction",
+                "metformin"
+            ],
+            "expected_primary_source_title_by_claim": {
+                "renal_risk": "CT imaging_guidelines",
+                "contrast_reaction_risk": "ACR-Manual-on-Contrast-Media",
+                "metformin_risk": "ACR-Manual-on-Contrast-Media"
+            },
+            "expected_primary_topic_by_claim": {
+                "renal_risk": "renal",
+                "contrast_reaction_risk": "contrast_reaction",
+                "metformin_risk": "metformin"
+            },
+            "manual_evidence_quality": "acceptable",
+            "expected_multi_risk_escalation": True
         }
     },
     {
@@ -473,11 +548,25 @@ def main():
         actual_claims = extract_claims(citations)
         actual_topics = extract_topics(citations)
         primary_citations_by_claim = extract_primary_citation_by_claim(citations)
+        actual_multi_risk_escalation = result["overall_decision"].get(
+            "multi_risk_escalation",
+            False,
+        )
+
+        expected_multi_risk_escalation = expected.get(
+            "expected_multi_risk_escalation",
+            False,
+        )
+
+        multi_risk_escalation_ok = (
+            actual_multi_risk_escalation == expected_multi_risk_escalation
+        )
 
         risk_ok = actual_risk == expected["expected_overall_risk"]
         action_ok = actual_action == expected["expected_action"]
         claims_ok = normalize_list(actual_claims) == normalize_list(expected["expected_claims"])
         topics_ok = normalize_list(actual_topics) == normalize_list(expected["expected_topics"])
+        multi_risk_escalation_ok = actual_multi_risk_escalation == expected_multi_risk_escalation
 
         evidence_eval = evaluate_evidence_expectations(
             expected=expected,
@@ -488,7 +577,13 @@ def main():
         if evidence_expectation_ok:
             evidence_expectation_pass_count += 1
 
-        overall_ok = risk_ok and action_ok and claims_ok and topics_ok
+        overall_ok = (
+            risk_ok
+            and action_ok
+            and claims_ok
+            and topics_ok
+            and multi_risk_escalation_ok
+        )
         if overall_ok:
             pass_count += 1
 
@@ -518,6 +613,7 @@ def main():
                 "claims": actual_claims,
                 "topics": actual_topics,
                 "primary_citations_by_claim": primary_citations_by_claim,
+                "multi_risk_escalation": actual_multi_risk_escalation,
             },
             "checks": {
                 "risk_ok": risk_ok,
@@ -525,6 +621,7 @@ def main():
                 "claims_ok": claims_ok,
                 "topics_ok": topics_ok,
                 "evidence_expectation_ok": evidence_expectation_ok,
+                "multi_risk_escalation": multi_risk_escalation_ok,
             },
             "manual_evidence_quality": expected.get("manual_evidence_quality", "not_set"),
             "evidence_expectation_eval": evidence_eval,
@@ -541,6 +638,10 @@ def main():
         print(f"action:  actual={actual_action} expected={expected['expected_action']} -> {action_ok}")
         print(f"claims:  actual={actual_claims} expected={expected['expected_claims']} -> {claims_ok}")
         print(f"topics:  actual={actual_topics} expected={expected['expected_topics']} -> {topics_ok}")
+        print(
+            f"multi_risk_escalation: actual={actual_multi_risk_escalation} "
+            f"expected={expected_multi_risk_escalation} -> {multi_risk_escalation_ok}"
+        )
         print(f"PASS: {overall_ok}")
 
         print(

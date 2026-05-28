@@ -38,6 +38,19 @@ st.set_page_config(
 
 LOG_PATH = Path("logs/case_runs.jsonl")
 
+def humanize_confidence_limiter(capped_by):
+    mapping = {
+        "rule_confidence": "The deterministic rule decision was the main limiting factor.",
+        "retrieval_confidence": "Retrieved evidence strength was the main limiting factor.",
+        "citation_alignment_confidence": "Citation-to-claim alignment was the main limiting factor.",
+        "completeness_confidence": "Missing or incomplete case information was the main limiting factor.",
+    }
+
+    return mapping.get(
+        capped_by,
+        "No single limiting factor was identified."
+    )
+
 
 def load_case_logs(log_path=LOG_PATH):
     if not log_path.exists():
@@ -173,6 +186,12 @@ def get_action_style(action: str) -> dict:
             "border": "rgba(245, 158, 11, 0.45)",
             "text_color": "#FCD34D",
         }
+    if action == "urgent_radiologist_review":
+        return {
+            "background": "#4a1f1f",
+            "border": "#f97316",
+            "text_color": "#fed7aa",
+        }
 
     if action == "proceed":
         return {
@@ -246,6 +265,17 @@ def prettify_protocol(protocol: str) -> str:
     if not protocol:
         return "n/a"
     return protocol.replace("_", " ").strip().title()
+
+def humanize_action(action):
+    mapping = {
+        "proceed": "Proceed",
+        "hold_and_review": "Hold and Review",
+        "hold_and_clarify": "Hold and Clarify Missing Information",
+        "proceed_with_caution_or_review": "Proceed With Caution / Review",
+        "urgent_radiologist_review": "Urgent Radiologist Review",
+    }
+
+    return mapping.get(action, action)
 
 
 def render_citation_card(citation: Any):
@@ -424,12 +454,13 @@ def render_assessment(result: dict):
     st.subheader("Assessment Summary")
 
     overall_risk = safe_get(overall, "overall_risk_level", "n/a")
-    recommended_action = safe_get(overall, "recommended_action", "n/a")
+    recommended_action_raw = safe_get(overall, "recommended_action", "n/a")
+    recommended_action = humanize_action(recommended_action_raw)
     can_proceed = str(safe_get(overall, "can_proceed", "n/a"))
     suggested_protocol = prettify_protocol(safe_get(protocol, "suggested_protocol", "n/a"))
 
     risk_style = get_risk_style(overall_risk)
-    action_style = get_action_style(recommended_action)
+    action_style = get_action_style(recommended_action_raw)
 
     top1, top2, top3, top4 = st.columns(4)
 
@@ -456,7 +487,23 @@ def render_assessment(result: dict):
 
     with top4:
         render_badge("Suggested Protocol", suggested_protocol)
+        if recommended_action_raw == "urgent_radiologist_review":
+            st.warning(
+                "Emergency context detected: this does not remove the risk. "
+                "It changes the workflow to urgent radiologist review and risk-benefit assessment."
+            )
+    multi_risk_escalation = safe_get(
+        overall,
+        "multi_risk_escalation",
+        False,
+    )
 
+    if multi_risk_escalation:
+        st.error(
+            "Multiple concurrent contrast-related risks detected. "
+            "Senior radiologist review is strongly recommended before proceeding."
+        )
+        
     st.markdown("---")
 
     left, right = st.columns([1.4, 1])
@@ -492,6 +539,8 @@ def render_assessment(result: dict):
             final_confidence = safe_get(confidence, "final_confidence", 0.0)
             confidence_label = safe_get(confidence, "confidence_label", "unknown")
             capped_by = safe_get(confidence, "capped_by", "unknown")
+            human_limiter = humanize_confidence_limiter(capped_by)
+            st.info(f"Primary limiting factor: {human_limiter}")
 
             st.metric(
                 "Final Confidence",
@@ -672,211 +721,9 @@ def main():
             render_assessment(result)
         except Exception as exc:
             st.error(f"Assessment failed: {exc}")
+
     
-    st.markdown("---")
-    st.subheader("Operational Logs")
 
-    logs = load_case_logs()
-
-    if not logs:
-        st.info("No operational logs yet. Run an assessment to generate logs.")
-    else:
-        logs_df = pd.DataFrame(logs)
-
-        st.markdown("### Operational Analytics")
-
-        risk_counts = logs_df["overall_risk"].value_counts()
-
-        st.markdown("#### Risk Distribution")
-        st.bar_chart(risk_counts)
-        st.markdown("#### Most Common Active Claims")
-
-        all_claims = []
-
-        for claims in logs_df["active_claims"]:
-            if isinstance(claims, list):
-                all_claims.extend(claims)
-
-        if all_claims:
-            claim_counts = pd.Series(all_claims).value_counts()
-            st.bar_chart(claim_counts)
-        else:
-            st.info("No active claims found in logs yet.")
-        st.markdown("#### Most Common Active Topics")
-
-        all_topics = []
-
-        for topics in logs_df["active_topics"]:
-            if isinstance(topics, list):
-                all_topics.extend(topics)
-
-        if all_topics:
-            topic_counts = pd.Series(all_topics).value_counts()
-            st.bar_chart(topic_counts)
-        else:
-            st.info("No active topics found in logs yet.")
-
-        st.markdown("#### Confidence Monitoring")
-
-        confidence_values = logs_df["confidence"].dropna()
-
-        if not confidence_values.empty:
-            avg_confidence = confidence_values.mean()
-
-            low_confidence_count = (
-                logs_df["confidence"] < 0.70
-            ).sum()
-
-            st.metric(
-                "Average Final Confidence",
-                round(avg_confidence, 3)
-            )
-
-            st.metric(
-                "Low Confidence Cases (< 0.70)",
-                int(low_confidence_count)
-            )
-
-            st.markdown("##### Confidence Limiting Factors")
-
-            capped_by_counts = (
-                logs_df["capped_by"]
-                .dropna()
-                .value_counts()
-            )
-
-            st.bar_chart(capped_by_counts)
-
-        else:
-            st.info("No confidence data available yet.")
-        st.markdown("#### Recommended Action Distribution")
-
-        if "recommended_action" in logs_df.columns:
-            action_counts = logs_df["recommended_action"].dropna().value_counts()
-
-            if not action_counts.empty:
-                st.bar_chart(action_counts)
-            else:
-                st.info("No recommended action data available yet.")
-        else:
-            st.info("Recommended action field not found in logs.")
-
-        st.markdown("#### Risk Level vs Recommended Action")
-
-        if "overall_risk" in logs_df.columns and "recommended_action" in logs_df.columns:
-            risk_action_table = pd.crosstab(
-                logs_df["overall_risk"],
-                logs_df["recommended_action"]
-            )
-
-            st.dataframe(
-                risk_action_table,
-                use_container_width=True
-            )
-        st.markdown("#### Evidence Support Monitoring")
-
-        if "selected_evidence_count" in logs_df.columns:
-            avg_evidence_count = logs_df["selected_evidence_count"].mean()
-
-            zero_evidence_cases = (
-                logs_df["selected_evidence_count"] == 0
-            ).sum()
-
-            st.metric(
-                "Average Selected Evidence Count",
-                round(avg_evidence_count, 2)
-            )
-
-            st.metric(
-                "Cases With No Selected Evidence",
-                int(zero_evidence_cases)
-            )
-
-            evidence_count_distribution = (
-                logs_df["selected_evidence_count"]
-                .value_counts()
-                .sort_index()
-            )
-
-            st.markdown("##### Selected Evidence Count Distribution")
-            st.bar_chart(evidence_count_distribution)
-
-        else:
-            st.info("Selected evidence count field not found in logs.")
-        
-        st.markdown("#### Operational Alerts")
-
-        low_confidence_cases = logs_df[
-            logs_df["confidence"] < 0.70
-        ]
-
-        if not low_confidence_cases.empty:
-            st.warning(
-                f"{len(low_confidence_cases)} low-confidence case(s) detected."
-            )
-
-            st.dataframe(
-                low_confidence_cases[
-                    [
-                        "timestamp",
-                        "overall_risk",
-                        "recommended_action",
-                        "confidence",
-                        "capped_by",
-                        "active_claims",
-                    ]
-                ].tail(5),
-                use_container_width=True,
-            )
-        else:
-            st.success("No recent low-confidence cases detected.")
-        
-        high_risk_cases = logs_df[
-            logs_df["overall_risk"] == "high"
-        ]
-
-        st.markdown("##### Recent High-Risk Cases")
-
-        if not high_risk_cases.empty:
-            st.dataframe(
-                high_risk_cases[
-                    [
-                        "timestamp",
-                        "recommended_action",
-                        "confidence",
-                        "active_claims",
-                        "active_topics",
-                    ]
-                ].tail(5),
-                use_container_width=True,
-            )
-        else:
-            st.info("No high-risk cases logged yet.")
-
-        display_columns = [
-            "timestamp",
-            "overall_risk",
-            "recommended_action",
-            "confidence",
-            "confidence_label",
-            "capped_by",
-            "active_claims",
-            "active_topics",
-            "selected_evidence_count",
-        ]
-
-        available_columns = [
-            col for col in display_columns
-            if col in logs_df.columns
-        ]
-        logs_df.index = range(1, len(logs_df) + 1)
-        st.dataframe(
-            logs_df[available_columns].tail(10),
-            use_container_width=True,
-        )
-
-        with st.expander("View raw operational logs"):
-            st.json(logs[-10:])
 
 
 if __name__ == "__main__":

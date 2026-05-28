@@ -64,6 +64,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         thyroid_risk=thyroid_risk,
     ))
     overall_decision = generate_overall_decision(
+        urgency_level=case.urgency_level.value,
         missing_information=missing_info,
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,

@@ -21,6 +21,48 @@ def generate_protocol_recommendation(
             "next_steps": missing_information,
             "alternative_consideration": "Reassess protocol after missing information is obtained."
         }
+    if action == "urgent_radiologist_review":
+        next_steps = []
+
+        if renal_flag == "high_renal_risk":
+            next_steps.append(
+                "Urgent radiologist review required due to severe renal risk and emergency imaging context."
+            )
+            next_steps.append(
+                "Proceed only if the emergency diagnostic benefit outweighs the renal risk."
+            )
+            next_steps.append(
+                "Use renal-protective precautions according to local department policy where appropriate."
+            )
+
+        if pregnancy_flag == "pregnancy_risk_review_required":
+            next_steps.append(
+                "Urgent senior review required due to pregnancy-related imaging risk and emergency context."
+            )
+
+        if contrast_flag == "high_contrast_reaction_risk":
+            next_steps.append(
+                "Urgent review required due to severe prior contrast reaction history."
+            )
+
+        if metformin_flag == "metformin_risk_hold_required":
+            next_steps.append(
+                "Review Metformin use urgently and arrange post-contrast renal function monitoring if contrast is administered."
+            )
+
+        if thyroid_flag == "hyperthyroid_contrast_risk":
+            next_steps.append(
+                "Urgent thyroid-risk review required before iodinated contrast if clinically feasible."
+            )
+
+        return {
+            "suggested_protocol": "emergency_radiologist_review_protocol",
+            "next_steps": next_steps,
+            "alternative_consideration": (
+                "Emergency imaging may proceed only after urgent risk-benefit review; "
+                "consider non-contrast CT or alternative modality if it can answer the clinical question."
+            )
+        }
 
     if action == "hold_and_review":
         next_steps = []

@@ -1,4 +1,17 @@
+def count_active_risk_flags(*flags):
+    non_risk_flags = {
+        None,
+        "no_renal_risk_detected",
+        "no_pregnancy_risk_detected",
+        "no_contrast_reaction_risk_detected",
+        "no_metformin_risk_detected",
+        "no_thyroid_risk_detected",
+    }
+
+    return sum(1 for flag in flags if flag not in non_risk_flags)
+
 def generate_overall_decision(
+    urgency_level: str,
     missing_information: list[str],
     renal_risk: dict,
     pregnancy_risk: dict,
@@ -12,6 +25,16 @@ def generate_overall_decision(
     metformin_flag = metformin_risk.get("flag")
     thyroid_flag = thyroid_risk.get("flag")     
     metformin_message= metformin_risk.get("post_scan_instructions")
+    
+    active_risk_count = count_active_risk_flags(
+    renal_flag,
+    pregnancy_flag,
+    contrast_flag,
+    metformin_flag,
+    thyroid_flag,
+)
+
+    multi_risk_escalation = active_risk_count >= 2
 
     if missing_information:
         return {
@@ -28,12 +51,28 @@ def generate_overall_decision(
         or metformin_flag == "metformin_risk_hold_required"
         or thyroid_flag == "hyperthyroid_contrast_risk"
     ):
+        if urgency_level == "emergency":
+                return {
+                    "overall_risk_level": "high",
+                    "recommended_action": "urgent_radiologist_review",
+                    "can_proceed": False,
+                    "summary": (
+                        "High-risk findings detected, but emergency imaging urgency "
+                        "may justify proceeding after immediate radiologist review "
+                        "and risk-benefit assessment."
+                    ),
+                    "cautionary_notes": metformin_message if metformin_message else None,
+                    "emergency_override": True,
+                    "multi_risk_escalation": multi_risk_escalation,
+                }
+            
         return {
             "overall_risk_level": "high",
             "recommended_action": "hold_and_review",
             "can_proceed": False,
             "summary": "High-risk findings detected. Case should be reviewed before proceeding with contrast-enhanced CT.",
             "cautionary_notes": metformin_message if metformin_message else None,
+            "multi_risk_escalation": multi_risk_escalation,
         }
 
     if (
@@ -53,11 +92,13 @@ def generate_overall_decision(
             "can_proceed": False,
             "summary": "Moderate-risk findings detected. Proceed only after cautionary review under current policy.",
             "cautionary_notes": metformin_message if metformin_message else None,
+            "multi_risk_escalation": multi_risk_escalation,
         }
 
     return {
         "overall_risk_level": "low",
         "recommended_action": "proceed",
         "can_proceed": True,
-        "summary": "No major V1 risk flags detected. Requested exam may proceed under current rule set."
+        "summary": "No major V1 risk flags detected. Requested exam may proceed under current rule set.",
+        "multi_risk_escalation": False,
     }
