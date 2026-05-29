@@ -1,4 +1,4 @@
-from app.rules.missing_info import detect_missing_information
+from app.rules.missing_info import detect_missing_information, classify_missing_information_severity
 from app.rules.renal import assess_renal_risk
 from app.rules.pregnancy import assess_pregnancy_risk
 from app.rules.contrast_reaction import assess_contrast_reaction_risk
@@ -54,6 +54,7 @@ def build_contrast_medication_precautions(
 
 def run_assessment(case: RadiologyCaseInput) -> dict:
     missing_info = detect_missing_information(case)
+    missing_information_severity = classify_missing_information_severity(missing_info)
     renal_risk = assess_renal_risk(case)
     pregnancy_risk = assess_pregnancy_risk(case)
     contrast_reaction_risk = assess_contrast_reaction_risk(case)
@@ -66,17 +67,19 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
     overall_decision = generate_overall_decision(
         urgency_level=case.urgency_level.value,
         missing_information=missing_info,
+        missing_information_severity=missing_information_severity,
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
         metformin_risk=metformin_risk,
         thyroid_risk=thyroid_risk,
     )
-    
+   
 
     protocol_recommendation = generate_protocol_recommendation(
         overall_decision=overall_decision,
         missing_information=missing_info,
+        missing_information_severity=missing_information_severity,
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
@@ -190,6 +193,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
     debug_trace = {
         "rule_trace": {
             "missing_information": missing_info,
+            "missing_information_severity": missing_information_severity,
             "renal_flag": renal_risk.get("flag"),
             "pregnancy_flag": pregnancy_risk.get("flag"),
             "contrast_reaction_flag": contrast_reaction_risk.get("flag"),

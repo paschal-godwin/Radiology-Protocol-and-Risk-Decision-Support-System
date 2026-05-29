@@ -1,6 +1,7 @@
 def generate_protocol_recommendation(
     overall_decision: dict,
     missing_information: list[str],
+    missing_information_severity: str,
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
@@ -16,9 +17,25 @@ def generate_protocol_recommendation(
     contrast_medication_precautions = overall_decision.get("contrast_medication_precautions", [])
     
     if action == "hold_and_clarify":
+        if missing_information_severity == "high":
+            severity_note = (
+                "High-severity missing information detected. "
+                "Do not proceed until this information is clarified."
+            )
+        elif missing_information_severity == "moderate":
+            severity_note = (
+                "Moderate-severity missing information detected. "
+                "Clarify before proceeding under current policy."
+            )
+        else:
+            severity_note = (
+                "Missing information detected. "
+                "Clarify before final protocol decision."
+            )
+
         return {
             "suggested_protocol": "do_not_proceed_yet",
-            "next_steps": missing_information,
+            "next_steps": [severity_note] + missing_information,
             "alternative_consideration": "Reassess protocol after missing information is obtained."
         }
     if action == "urgent_radiologist_review":

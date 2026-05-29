@@ -166,6 +166,7 @@ EVAL_CASES = [
         },
         "expected": {
             "expected_overall_risk": "insufficient_information",
+            "expected_missing_information_severity": "high",
             "expected_action": "hold_and_clarify",
             "expected_claims": [],
             "expected_topics": [],
@@ -543,6 +544,15 @@ def main():
 
         actual_risk = result["overall_decision"]["overall_risk_level"]
         actual_action = result["overall_decision"]["recommended_action"]
+        actual_missing_information_severity = result["overall_decision"].get(
+            "missing_information_severity",
+            "none",
+        )
+
+        expected_missing_information_severity = expected.get(
+            "expected_missing_information_severity",
+            "none",
+        )
 
         citations = result["explanation"]["citations"]
         actual_claims = extract_claims(citations)
@@ -567,6 +577,11 @@ def main():
         claims_ok = normalize_list(actual_claims) == normalize_list(expected["expected_claims"])
         topics_ok = normalize_list(actual_topics) == normalize_list(expected["expected_topics"])
         multi_risk_escalation_ok = actual_multi_risk_escalation == expected_multi_risk_escalation
+        missing_information_severity_ok = (
+            actual_missing_information_severity
+            == expected_missing_information_severity
+        )
+
 
         evidence_eval = evaluate_evidence_expectations(
             expected=expected,
@@ -583,6 +598,7 @@ def main():
             and claims_ok
             and topics_ok
             and multi_risk_escalation_ok
+            and missing_information_severity_ok
         )
         if overall_ok:
             pass_count += 1
@@ -614,6 +630,7 @@ def main():
                 "topics": actual_topics,
                 "primary_citations_by_claim": primary_citations_by_claim,
                 "multi_risk_escalation": actual_multi_risk_escalation,
+                "missing_information_severity": actual_missing_information_severity,
             },
             "checks": {
                 "risk_ok": risk_ok,
@@ -622,6 +639,7 @@ def main():
                 "topics_ok": topics_ok,
                 "evidence_expectation_ok": evidence_expectation_ok,
                 "multi_risk_escalation": multi_risk_escalation_ok,
+                "missing_information_severity_ok": missing_information_severity_ok,
             },
             "manual_evidence_quality": expected.get("manual_evidence_quality", "not_set"),
             "evidence_expectation_eval": evidence_eval,

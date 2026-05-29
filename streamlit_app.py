@@ -450,6 +450,11 @@ def render_assessment(result: dict):
     confidence = result.get("confidence")
     debug_trace = result.get("debug_trace", {})
     missing_info = result.get("missing_information", [])
+    missing_info_severity = safe_get(
+        overall,
+        "missing_information_severity",
+        "none",
+    )
 
     st.subheader("Assessment Summary")
 
@@ -502,6 +507,18 @@ def render_assessment(result: dict):
         st.error(
             "Multiple concurrent contrast-related risks detected. "
             "Senior radiologist review is strongly recommended before proceeding."
+        )
+        
+    if missing_info_severity == "high":
+        st.error(
+            "High-severity missing information detected. "
+            "Critical information must be clarified before proceeding."
+        )
+
+    elif missing_info_severity == "moderate":
+        st.warning(
+            "Moderate-severity missing information detected. "
+            "Clarification is recommended before proceeding."
         )
         
     st.markdown("---")

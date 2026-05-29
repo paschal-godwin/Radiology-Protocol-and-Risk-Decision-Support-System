@@ -20,19 +20,28 @@ Instead of generating decisions directly from an LLM, the system uses determinis
 ## What the system does
 
 Given a patient case, the system evaluates:
-- renal risk
-- prior contrast reaction risk
-- pregnancy-related risk
-- missing screening information
+
+* renal risk
+* prior contrast reaction risk
+* pregnancy-related risk
+* metformin-related precautions
+* thyroid-related contrast precautions
+* missing screening information
+* emergency workflow context
+* multi-risk escalation scenarios
 
 It then produces:
-- an overall risk level
-- a recommended action
-- a protocol recommendation
-- a grounded explanation
-- claim-linked citations
-- a confidence breakdown
-- a technical debug trace
+
+* an overall risk level
+* a recommended action
+* a protocol recommendation
+* workflow escalation warnings
+* a grounded explanation
+* claim-linked citations
+* a structured confidence breakdown
+* retrieval/debug observability
+* operational monitoring traces
+
 
 ## Key features
 
@@ -62,6 +71,30 @@ It then produces:
 ### 1. Deterministic Decision Layer
 The system first evaluates the case using explicit rules. This decides the risk level and action before any retrieval happens.
 
+## Key features
+
+* **Clinical workflow escalation**
+
+  * emergency override workflow handling
+  * multi-risk escalation detection
+  * missing-information severity classification
+  * structured workflow warnings
+
+* **Operational reliability**
+
+  * structured evaluation suite
+  * regression comparison tooling
+  * operational case logging
+  * confidence-aware monitoring
+
+* **Confidence-aware communication**
+
+  * decomposed confidence scoring
+  * weakest-link confidence capping
+  * retrieval alignment monitoring
+  * missing-information confidence penalties
+
+
 ### 2. Retrieval Layer
 Only the clinically relevant topics are queried against the vector store.
 
@@ -87,6 +120,21 @@ The app can distinguish between:
 - **hold and clarify**
 
 It can also explain why a case was blocked, which topic triggered the decision, and which evidence supported the explanation.
+
+The app can also distinguish between:
+
+* emergency override workflows
+* multi-risk escalation cases
+* high-severity missing information
+* evidence-supported review recommendations
+
+The system communicates:
+
+* why escalation occurred
+* which workflow factors triggered caution
+* which evidence supported the explanation
+* what limited overall confidence
+
 
 ## Evaluation & Observability
 
@@ -129,6 +177,30 @@ and generates:
 
 to detect pass/fail changes, confidence drops, changed outputs, and regression risks.
 
+## System Design Philosophy
+
+This system prioritizes:
+
+* deterministic workflow reasoning
+* conservative decision handling
+* auditability and observability
+* evidence-backed explanations
+* structured confidence communication
+* explicit escalation logic
+
+Rather than allowing an LLM to generate unrestricted medical decisions, the system uses deterministic clinical rules as the primary decision layer while retrieval is used to support explanations and evidence grounding.
+
+The project intentionally emphasizes:
+
+* inspectable workflows
+* regression testing
+* failure visibility
+* operational monitoring
+* explainable escalation behavior
+
+over unconstrained generative fluency.
+
+
 ## Why this is not a chatbot
 
 This project is not designed as a freeform medical chatbot.
@@ -152,20 +224,24 @@ The Streamlit interface includes:
 ## Project structure
 
 ```text
-radiology-decision-support/
-├── app/
-│   ├── api/
-│   ├── engines/
-│   ├── rag/
-│   ├── rules/
-│   ├── schemas/
-│   └── services/
-├── data/
-├── eval/
-├── scripts/
-├── streamlit_app.py
-├── requirements.txt
-└── README.md
+  radiology-decision-support/
+  ├── app/
+  │   ├── api/
+  │   ├── engines/
+  │   ├── rag/
+  │   ├── rules/
+  │   ├── schemas/
+  │   └── services/
+  ├── data/
+  ├── eval/
+  │   └── results/
+  ├── logs/
+  ├── screenshots/
+  ├── scripts/
+  ├── streamlit_app.py
+  ├── requirements.txt
+  └── README.md
+
 ```
 ## Installation
 

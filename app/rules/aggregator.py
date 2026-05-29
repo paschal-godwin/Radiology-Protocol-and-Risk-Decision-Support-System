@@ -13,6 +13,7 @@ def count_active_risk_flags(*flags):
 def generate_overall_decision(
     urgency_level: str,
     missing_information: list[str],
+    missing_information_severity: str,
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
@@ -41,7 +42,8 @@ def generate_overall_decision(
             "overall_risk_level": "insufficient_information",
             "recommended_action": "hold_and_clarify",
             "can_proceed": False,
-            "summary": "Critical information is missing. Do not proceed until the required information is clarified."
+            "summary": "Critical information is missing. Do not proceed until the required information is clarified.",
+            "missing_information_severity": missing_information_severity,
         }
 
     if (
@@ -64,6 +66,7 @@ def generate_overall_decision(
                     "cautionary_notes": metformin_message if metformin_message else None,
                     "emergency_override": True,
                     "multi_risk_escalation": multi_risk_escalation,
+                    "missing_information_severity": "none",
                 }
             
         return {
@@ -73,6 +76,7 @@ def generate_overall_decision(
             "summary": "High-risk findings detected. Case should be reviewed before proceeding with contrast-enhanced CT.",
             "cautionary_notes": metformin_message if metformin_message else None,
             "multi_risk_escalation": multi_risk_escalation,
+            "missing_information_severity": "none",
         }
 
     if (
@@ -93,6 +97,7 @@ def generate_overall_decision(
             "summary": "Moderate-risk findings detected. Proceed only after cautionary review under current policy.",
             "cautionary_notes": metformin_message if metformin_message else None,
             "multi_risk_escalation": multi_risk_escalation,
+            "missing_information_severity": "none",
         }
 
     return {
@@ -101,4 +106,5 @@ def generate_overall_decision(
         "can_proceed": True,
         "summary": "No major V1 risk flags detected. Requested exam may proceed under current rule set.",
         "multi_risk_escalation": False,
+        "missing_information_severity": "none",
     }
