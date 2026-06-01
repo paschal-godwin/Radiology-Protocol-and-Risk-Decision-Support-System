@@ -314,8 +314,25 @@ OPENAI_API_KEY="your_key_here"
 ### 4. System Debug & Evidence Trace
 ![Debug Trace](screenshots/4_debug_trace.png)
 
-### 5. System Debug & Evidence Trace
+### 5. System Debug & Evidence Trace 2
 ![Debug Trace](screenshots/5_debug_trace_2.png)
+
+### 6. Emergency Override
+![Debug Trace](screenshots/6_emergency_override.png)
+
+### 7. Multi Risk Escalation
+![Debug Trace](screenshots/7_multi_risk_escalation.png)
+
+### 8. Missing Information Severity
+![Debug Trace](screenshots/8_missing_info_severity.png)
+
+### 9. Operational Audits
+![Debug Trace](screenshots/9_operational_audits.png)
+
+### 10. Operational Audits 2
+![Debug Trace](screenshots/10_operational_audits2.png)
+
+
 
 ## Author
 
