@@ -68,6 +68,28 @@ It then produces:
 
 ## System architecture
 
+### Diagram
+``` 
+Patient Case
+      ↓
+Deterministic Risk Rules
+      ↓
+Risk Aggregation
+      ↓
+Clinical Decision
+      ↓
+Guideline Retrieval
+      ↓
+Evidence Selection
+      ↓
+Confidence Scoring
+      ↓
+Explanation Generation
+      ↓
+Final Assessment 
+
+```
+
 ### 1. Deterministic Decision Layer
 The system first evaluates the case using explicit rules. This decides the risk level and action before any retrieval happens.
 
