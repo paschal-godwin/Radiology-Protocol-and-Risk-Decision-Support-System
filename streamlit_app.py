@@ -375,7 +375,7 @@ def build_case_input_from_form() -> RadiologyCaseInput | None:
 
     with col3:
         egfr_input = st.text_input(
-            "eGFR (leave blank if unknown)",
+            "eGFR",
             key="egfr",
         )
 

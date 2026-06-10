@@ -41,6 +41,17 @@ def generate_protocol_recommendation(
     if action == "urgent_radiologist_review":
         next_steps = []
 
+        if missing_information:
+            next_steps.append(
+                "High-severity missing information is present in an emergency context."
+            )
+            next_steps.append(
+                "Proceed only after immediate radiologist review and documented risk-benefit assessment."
+            )
+            next_steps.append(
+                "Clarify missing information as soon as clinically feasible, but do not treat the missing field as routine workflow delay if emergency imaging is time-critical."
+            )
+
         if renal_flag == "high_renal_risk":
             next_steps.append(
                 "Urgent radiologist review required due to severe renal risk and emergency imaging context."

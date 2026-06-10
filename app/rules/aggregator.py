@@ -38,12 +38,29 @@ def generate_overall_decision(
     multi_risk_escalation = active_risk_count >= 2
 
     if missing_information:
+        if urgency_level == "emergency" and missing_information_severity == "high":
+            return {
+                "overall_risk_level": "high",
+                "recommended_action": "urgent_radiologist_review",
+                "can_proceed": False,
+                "summary": (
+                    "High-severity missing information is present, but emergency imaging urgency "
+                    "may justify proceeding after immediate radiologist review and documented "
+                    "risk-benefit assessment."
+                ),
+                "missing_information_severity": missing_information_severity,
+                "emergency_override": True,
+                "multi_risk_escalation": False,
+            }
+
         return {
             "overall_risk_level": "insufficient_information",
             "recommended_action": "hold_and_clarify",
             "can_proceed": False,
             "summary": "Critical information is missing. Do not proceed until the required information is clarified.",
             "missing_information_severity": missing_information_severity,
+            "emergency_override": False,
+            "multi_risk_escalation": False,
         }
 
     if (

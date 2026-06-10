@@ -251,6 +251,34 @@ EVAL_CASES = [
         }
     },
     {
+        "name": "emergency_missing_egfr_override",
+        "input": {
+            "age": 45,
+            "sex": "male",
+            "pregnancy_status": "not_applicable",
+            "exam_requested": "CT",
+            "contrast_requested": True,
+            "urgency_level": "emergency",
+            "egfr": None,
+            "allergy_history": False,
+            "prior_contrast_reaction": "none",
+            "diabetes_status": "non_diabetic",
+            "metformin_use": "no",
+            "thyroid_status": "normal"
+        },
+        "expected": {
+            "expected_overall_risk": "high",
+            "expected_action": "urgent_radiologist_review",
+            "expected_claims": [],
+            "expected_topics": [],
+            "expected_primary_source_title_by_claim": {},
+            "expected_primary_topic_by_claim": {},
+            "manual_evidence_quality": "not_applicable",
+            "expected_multi_risk_escalation": False,
+            "expected_missing_information_severity": "high"
+        }
+    },
+    {
         "name": "low_risk_proceed_case",
         "input": {
             "age": 39,
