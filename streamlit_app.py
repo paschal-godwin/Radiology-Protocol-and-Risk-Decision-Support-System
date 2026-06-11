@@ -22,7 +22,6 @@ from app.schemas.input import (  # noqa: E402
     PregnancyStatus,
     PriorContrastReaction,
     UrgencyLevel,
-    DiabetesStatus,
     MetforminUse,
     ThyroidStatus,
 )
@@ -80,8 +79,7 @@ def initialize_state():
         "pregnancy_status": "not_applicable",
         "reaction": "none",
         "loaded_demo_name": "None",
-        "diabetes_status": "unknown",
-        "metformin_use": "unknown",
+        "metformin_use": "no",
         "thyroid_status": "unknown",
     }
     for key, value in defaults.items():
@@ -110,7 +108,6 @@ def load_demo_into_state(case_name: str):
     st.session_state["sex"] = demo["sex"]
     st.session_state["exam"] = demo["exam_requested"]
     st.session_state["contrast"] = demo["contrast_requested"]
-    st.session_state["diabetes"] = demo["diabetes_status"]
     st.session_state["metformin"] = demo["metformin_use"]
     st.session_state["thyroid"] = demo["thyroid_status"]
     st.session_state["urgency"] = demo["urgency_level"]
@@ -357,11 +354,6 @@ def build_case_input_from_form() -> RadiologyCaseInput | None:
             options=["false", "true", "unknown"],
             key="allergy",
         )
-        diabetes_status = st.selectbox(
-            "Diabetes Status",
-            options=[member.value for member in DiabetesStatus],
-            key="diabetes",
-        )
         metformin_use = st.selectbox(
             "Metformin Use",
             options=[member.value for member in MetforminUse],
@@ -433,7 +425,6 @@ def build_case_input_from_form() -> RadiologyCaseInput | None:
         egfr=egfr_value,
         allergy_history=allergy_history_value,
         prior_contrast_reaction=PriorContrastReaction(prior_contrast_reaction),
-        diabetes_status=DiabetesStatus(diabetes_status),
         metformin_use=MetforminUse(metformin_use),
         thyroid_status=ThyroidStatus(thyroid_status),
         
@@ -624,7 +615,6 @@ def load_demo_case(case_name: str) -> dict:
             "allergy_history": True,
             "prior_contrast_reaction": "severe",
             "thyroid_status": "normal",
-            "diabetes_status": "non_diabetic",
             "metformin_use": "no",
         },
         "Pregnancy Review Case": {
@@ -638,7 +628,6 @@ def load_demo_case(case_name: str) -> dict:
             "allergy_history": False,
             "prior_contrast_reaction": "none",
             "thyroid_status": "normal",
-            "diabetes_status": "non_diabetic",
             "metformin_use": "no",
         },
         "Low Risk Proceed Case": {
@@ -652,7 +641,6 @@ def load_demo_case(case_name: str) -> dict:
             "allergy_history": False,
             "prior_contrast_reaction": "none",
             "thyroid_status": "normal",
-            "diabetes_status": "non_diabetic",
             "metformin_use": "no",
         },
     }

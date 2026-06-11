@@ -1,25 +1,13 @@
-from app.schemas.input import RadiologyCaseInput, MetforminUse, DiabetesStatus 
+from app.schemas.input import RadiologyCaseInput, MetforminUse
 
 
 def assess_metformin_risk(case: RadiologyCaseInput) -> dict:
-    if contrast_not_requested := not case.contrast_requested:
+    if not case.contrast_requested:
         return {
             "flag": None,
             "message": "No Metformin-related risk because contrast is not requested."
         }
     
-    if case.diabetes_status == DiabetesStatus.non_diabetic:
-        return {
-            "flag": None,
-            "message": "Patient is non-diabetic. Metformin use not applicable."
-        }
-    
-    if case.diabetes_status == DiabetesStatus.unknown:
-        return {
-            "flag": "diabetes_status_unknown",
-            "message": "Diabetes status is unknown. Metformin use should be interpreted with caution."
-        }
-
     if case.metformin_use == MetforminUse.unknown:
         return {
             "flag": "metformin_risk_hold_required",
@@ -40,12 +28,19 @@ def assess_metformin_risk(case: RadiologyCaseInput) -> dict:
             "post_scan_instructions": "Consider holding Metformin for 48 hours post-scan and monitor renal function before resuming."
         }
     
-    if case.metformin_use == MetforminUse.yes and case.egfr >=30:
-            return {
-                "flag": "metformin_risk_low_review_recommended",
-                "message": f"Patient is on Metformin. Risk of lactic acidosis is low but monitor renal function post-scan.",
-                "post_scan_instructions": "Continue metformin per local policy if eGFR is stable and no AKI is present; advise renal-function review if clinically indicated."
-            }
+    if case.metformin_use == MetforminUse.yes and 30 <= case.egfr < 45:
+        return {
+            "flag": "metformin_risk_low_review_recommended",
+            "message": "Patient is on Metformin with moderately reduced eGFR. Contrast use may proceed only with cautionary review under local policy.",
+            "post_scan_instructions": "Consider renal-function review and follow local policy on Metformin withholding/resumption."
+        }
+
+    if case.metformin_use == MetforminUse.yes and case.egfr >= 45:
+        return {
+            "flag": "metformin_risk_low_review_recommended",
+            "message": "Patient is on Metformin with acceptable eGFR. Metformin-related contrast risk is low under current V1 rule.",
+            "post_scan_instructions": "Continue Metformin per local policy if renal function is stable and no AKI is present."
+        }
 
 
     return {
