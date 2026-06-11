@@ -33,6 +33,6 @@ def assess_contrast_reaction_risk(case: RadiologyCaseInput) -> dict:
         }
 
     return {
-        "flag": None,
+        "flag": "no_contrast_reaction_risk_detected",
         "message": "No prior contrast reaction risk detected by current V1 rule."
     }

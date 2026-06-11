@@ -44,25 +44,50 @@ def generate_explanation(
             "Missing required screening information prevents final protocol clearance."
         )
 
-    renal_message = renal_risk.get("message")
-    if renal_message and renal_risk.get("flag") is not None:
-        explanation_parts.append(renal_message)
-        rule_based_factors.append(renal_message)
+    active_risks = []
 
-    pregnancy_message = pregnancy_risk.get("message")
-    if pregnancy_message and pregnancy_risk.get("flag") is not None:
-        explanation_parts.append(pregnancy_message)
-        rule_based_factors.append(pregnancy_message)
+    if renal_risk.get("flag") not in {None, "no_renal_risk_detected"}:
+        active_risks.append("renal risk")
 
-    contrast_message = contrast_reaction_risk.get("message")
-    if contrast_message and contrast_reaction_risk.get("flag") is not None:
-        explanation_parts.append(contrast_message)
-        rule_based_factors.append(contrast_message)
+    if pregnancy_risk.get("flag") not in {None, "no_pregnancy_risk_detected"}:
+        active_risks.append("pregnancy considerations")
 
-    metformin_message = metformin_risk.get("message")
-    if metformin_message and metformin_risk.get("flag") is not None:
-        explanation_parts.append(metformin_message)
-        rule_based_factors.append(metformin_message)
+    if contrast_reaction_risk.get("flag") not in {None, "no_contrast_reaction_risk_detected"}:
+        active_risks.append("contrast reaction history")
+
+    if metformin_risk.get("flag") not in {None, "no_metformin_risk_detected"}:
+        active_risks.append("metformin-related considerations")
+
+    if thyroid_risk.get("flag") not in {None, "no_thyroid_risk_detected"}:
+        active_risks.append("thyroid-related considerations")
+
+    # Keep detailed factors for auditability
+    non_risk_flags = {
+        None,
+        "no_renal_risk_detected",
+        "no_pregnancy_risk_detected",
+        "no_contrast_reaction_risk_detected",
+        "no_metformin_risk_detected",
+        "no_thyroid_risk_detected",
+    }
+
+    for risk_dict in [
+        renal_risk,
+        pregnancy_risk,
+        contrast_reaction_risk,
+        metformin_risk,
+        thyroid_risk,
+    ]:
+        message = risk_dict.get("message")
+        flag = risk_dict.get("flag")
+
+        if message and flag not in non_risk_flags:
+            rule_based_factors.append(message)
+    # Build concise narrative summary
+    if active_risks:
+        explanation_parts.append(
+            f"The case contains the following relevant findings: {', '.join(active_risks)}."
+        )
 
     decision_summary = overall_decision.get("summary")
     if decision_summary:
@@ -178,10 +203,18 @@ def generate_explanation(
 
     evidence_summary = " ".join(evidence_lines) if evidence_lines else None
 
-    if evidence_summary:
-        explanation_parts.append("Supporting guideline evidence: " + evidence_summary)
 
-    concise_summary = " ".join(explanation_parts)
+    summary_lines = []
+
+    if active_risks:
+        summary_lines.append(
+            f"Relevant findings: {', '.join(active_risks)}."
+        )
+
+    if decision_summary:
+        summary_lines.append(decision_summary)
+
+    concise_summary = "\n\n".join(summary_lines)
 
     return {
         "reasoning_summary": concise_summary,

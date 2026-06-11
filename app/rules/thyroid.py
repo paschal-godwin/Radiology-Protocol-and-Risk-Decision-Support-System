@@ -7,6 +7,12 @@ def assess_thyroid_risk(case: RadiologyCaseInput) -> dict:
             "message": "No thyroid-related risk because contrast is not requested."
         }
       
+      if case.thyroid_status == ThyroidStatus.normal:
+            return {
+                "flag": "no_thyroid_risk_detected",
+                "message": "No thyroid-related risk detected by current V1 rule."
+            }
+      
       if case.thyroid_status == ThyroidStatus.unknown:
             return {
                 "flag": "hyperthyroid_contrast_risk",
