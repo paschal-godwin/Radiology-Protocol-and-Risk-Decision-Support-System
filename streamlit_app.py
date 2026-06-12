@@ -6,6 +6,7 @@ from typing import Any
 from pathlib import Path
 
 
+
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -81,6 +82,7 @@ def initialize_state():
         "loaded_demo_name": "None",
         "metformin_use": "no",
         "thyroid_status": "unknown",
+        "last_result": None,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -275,6 +277,25 @@ def humanize_action(action):
     return mapping.get(action, action)
 
 
+
+SOURCE_URLS = {
+    "ACR-Manual-on-Contrast-Media": "https://github.com/paschal-godwin/Radiology-Protocol-and-Risk-Decision-Support-System/blob/main/data/guidelines/ACR-Manual-on-Contrast-Media.pdf",
+    "CT imaging_guidelines": "https://github.com/paschal-godwin/Radiology-Protocol-and-Risk-Decision-Support-System/blob/main/data/guidelines/CT%20imaging_guidelines.pdf",
+}
+
+
+def build_source_link(source_title, page_number=None):
+    base_url = SOURCE_URLS.get(source_title)
+
+    if not base_url:
+        return None
+
+    if page_number is not None:
+        return f"{base_url}#page={page_number}"
+
+    return base_url
+
+
 def render_citation_card(citation: Any):
     claim = safe_get(citation, "claim", "unknown_claim")
     topic = safe_get(citation, "topic", "unknown_topic")
@@ -283,7 +304,8 @@ def render_citation_card(citation: Any):
     snippet = safe_get(citation, "snippet", "")
 
     page_text = f"p. {page_number}" if page_number is not None else "page n/a"
-
+    source_link = build_source_link(source_title, page_number)
+    
     st.markdown(
         f"""
         <div style="
@@ -299,13 +321,14 @@ def render_citation_card(citation: Any):
                 {source_title} ({page_text})
             </div>
             <div style="font-size: 0.96rem; line-height: 1.5;">
-                {snippet}
+            {f'<a href="{source_link}" target="_blank">🔗 Open source document ({page_text})</a><br><br>' if source_link else ''}
+            {snippet}
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
-
+    
 
 # -----------------------------
 # Input area
@@ -713,6 +736,8 @@ def main():
 
     st.markdown("---")
     run_clicked = st.button("Run Assessment", use_container_width=True)
+    
+    
 
     if run_clicked:
         if case is None:
@@ -723,9 +748,12 @@ def main():
             with st.spinner("Running deterministic assessment..."):
                 result = run_assessment(case)
                 log_case_run(case, result)
-            render_assessment(result)
+            st.session_state["last_result"] = result
         except Exception as exc:
             st.error(f"Assessment failed: {exc}")
+    
+    if st.session_state.get("last_result") is not None:
+        render_assessment(st.session_state["last_result"])
 
     
 
