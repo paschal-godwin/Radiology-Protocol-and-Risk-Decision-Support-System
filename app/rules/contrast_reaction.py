@@ -17,13 +17,19 @@ def assess_contrast_reaction_risk(case: RadiologyCaseInput) -> dict:
     if case.prior_contrast_reaction == PriorContrastReaction.severe:
         return {
             "flag": "high_contrast_reaction_risk",
-            "message": "History of severe prior contrast reaction. Contrast use should be reviewed carefully before proceeding."
+             "message": (
+                "History of severe prior contrast reaction. Do not proceed as routine; "
+                "radiologist or senior protocol review is required before contrast administration."
+            )
         }
 
     if case.prior_contrast_reaction == PriorContrastReaction.moderate:
         return {
             "flag": "moderate_contrast_reaction_risk",
-            "message": "History of moderate prior contrast reaction. Caution and review are recommended."
+            "message": (
+                "History of moderate prior contrast reaction. Proceed with heightened caution, "
+                "close observation, and contrast reaction readiness according to local protocol."
+            )
         }
 
     if case.prior_contrast_reaction == PriorContrastReaction.mild:

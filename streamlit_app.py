@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+from unittest import result
 import pandas as pd
 from typing import Any
 from pathlib import Path
@@ -168,6 +169,23 @@ def get_risk_style(risk_level: str) -> dict:
         },
     )
 
+PRIOR_CONTRAST_REACTION_LABELS = {
+    "none": "None — no previous contrast reaction",
+    "mild": (
+        "Mild — limited hives/itching, limited swelling, scratchy throat, "
+        "nasal congestion/sneezing, mild nausea/warmth"
+    ),
+    "moderate": (
+        "Moderate — diffuse hives/itching, facial swelling without breathing difficulty, "
+        "throat tightness/hoarseness without breathing difficulty, mild wheeze/no low oxygen"
+    ),
+    "severe": (
+        "Severe — breathing difficulty/low oxygen, throat swelling with stridor, "
+        "low blood pressure/shock, or collapse"
+    ),
+    "unknown": "Unknown — previous reaction reported, but details/severity are unclear",
+}
+
 
 def get_action_style(action: str) -> dict:
     action = (action or "").lower()
@@ -179,7 +197,7 @@ def get_action_style(action: str) -> dict:
             "text_color": "#FCA5A5",
         }
 
-    if action == "proceed_with_caution_or_review":
+    if action in {"proceed_with_caution", "proceed_with_caution_or_review"}:
         return {
             "background": "rgba(245, 158, 11, 0.12)",
             "border": "rgba(245, 158, 11, 0.45)",
@@ -256,6 +274,34 @@ def render_medication_precautions(precautions: list):
             """
         )
 
+def render_safety_precautions(precautions: list):
+    if not precautions:
+        return
+
+    st.markdown("#### ⚠️ Contrast Safety Precautions")
+
+    for item in precautions:
+        category = safe_get(item, "category", "Safety Precaution")
+        flag = safe_get(item, "flag", "")
+        message = safe_get(item, "message", "")
+        pre_scan_instruction = safe_get(item, "pre_scan_instruction", "")
+        post_scan_instruction = safe_get(item, "post_scan_instruction", None)
+
+        precaution_text = f"""
+**{category}**
+
+{message}
+
+**Pre-scan instruction:** {pre_scan_instruction}
+
+`{flag}`
+        """
+
+        if post_scan_instruction:
+            precaution_text += f"\n\n**Post-scan instruction:** {post_scan_instruction}"
+
+        st.warning(precaution_text)
+
 def format_confidence_label(score: float, label: str) -> str:
     return f"{label.title()} ({score:.2f})"
 
@@ -270,7 +316,7 @@ def humanize_action(action):
         "proceed": "Proceed",
         "hold_and_review": "Hold and Review",
         "hold_and_clarify": "Hold and Clarify Missing Information",
-        "proceed_with_caution_or_review": "Proceed With Caution / Review",
+        "proceed_with_caution": "Proceed With Caution / Review",
         "urgent_radiologist_review": "Urgent Radiologist Review",
     }
 
@@ -423,7 +469,25 @@ def build_case_input_from_form() -> RadiologyCaseInput | None:
             "Prior Contrast Reaction",
             options=[member.value for member in PriorContrastReaction],
             key="reaction",
+            format_func=lambda value: PRIOR_CONTRAST_REACTION_LABELS.get(value, value),
+            help=(
+                "Choose the closest severity based on the previous reaction. "
+                "If the details are unclear, choose unknown."
+            ),
         )
+
+        with st.expander("How to classify prior contrast reaction"):
+            st.markdown(
+                """
+        **Mild:** limited hives/itching, limited swelling, scratchy throat, nasal congestion, sneezing, mild nausea/warmth.
+
+        **Moderate:** diffuse hives/itching, facial swelling without breathing difficulty, throat tightness/hoarseness without breathing difficulty, mild wheeze without low oxygen.
+
+        **Severe:** breathing difficulty, low oxygen, throat swelling with noisy breathing/stridor, low blood pressure, shock, collapse, or cardiac arrest.
+
+        If the patient only says “I reacted before” but the symptoms are unclear, choose **Unknown**.
+                """
+            )
 
     egfr_value = None
     if egfr_input.strip():
@@ -542,9 +606,12 @@ def render_assessment(result: dict):
     with left:
         st.subheader("Why the System Made This Decision")
         st.write(safe_get(explanation, "reasoning_summary", ""))
+
         contrast_medication_precautions = result.get("contrast_medication_precautions", [])
-        
+        contrast_safety_precautions = result.get("contrast_safety_precautions", [])
+
         render_medication_precautions(contrast_medication_precautions)
+        render_safety_precautions(contrast_safety_precautions)
 
         rule_based_factors = safe_get(explanation, "rule_based_factors", [])
         if rule_based_factors:
@@ -754,6 +821,12 @@ def main():
     
     if st.session_state.get("last_result") is not None:
         render_assessment(st.session_state["last_result"])
+
+    st.link_button(
+        "Leave Feedback",
+        "https://forms.gle/kLsXhVtdE3wbZaZw5",
+    )
+    
 
     
 

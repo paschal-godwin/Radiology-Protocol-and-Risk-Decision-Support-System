@@ -223,6 +223,7 @@ def generate_explanation(
             "contrast_requested": case.get("contrast_requested"),
             "overall_risk_level": overall_decision.get("overall_risk_level"),
             "recommended_action": overall_decision.get("recommended_action"),
+            "can_proceed": overall_decision.get("can_proceed"),
             "suggested_protocol": protocol_recommendation.get("suggested_protocol"),
         },
         "rule_based_factors": rule_based_factors,

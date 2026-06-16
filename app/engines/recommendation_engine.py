@@ -121,36 +121,56 @@ def generate_protocol_recommendation(
             "alternative_consideration": "Alternative protocol or modality may be required depending on review outcome."
         }
 
-    if action == "proceed_with_caution_or_review":
+    if action == "proceed_with_caution":
         next_steps = []
 
         if renal_flag == "moderate_renal_risk":
-            next_steps.append("Proceed only after renal risk review under department policy.")
-
-        if pregnancy_flag == "pregnancy_status_unknown":
-            next_steps.append("Confirm pregnancy status before proceeding.")
-
-        if contrast_flag == "moderate_contrast_reaction_risk":
-            next_steps.append("Review moderate prior contrast reaction before proceeding.")
+            next_steps.append(
+                "Proceed with caution under department renal-risk policy."
+            )
+            next_steps.append(
+                "Ensure renal-risk precautions are followed where appropriate."
+            )
 
         if contrast_flag == "mild_contrast_reaction_risk":
-            next_steps.append("Use caution due to mild prior contrast reaction history.")
+            next_steps.append(
+                "Use caution due to mild prior contrast reaction history."
+            )
+            next_steps.append(
+                "Ensure contrast reaction readiness according to local department protocol."
+            )
 
-        if contrast_flag == "contrast_reaction_history_unknown":
-            next_steps.append("Clarify prior contrast reaction history before proceeding.")
+        if contrast_flag == "moderate_contrast_reaction_risk":
+            next_steps.append(
+                "Use heightened caution due to moderate prior contrast reaction history."
+            )
+            next_steps.append(
+                "Proceed only with close observation and contrast reaction readiness according to local department protocol."
+            )
 
         if metformin_flag == "metformin_risk_low_review_recommended":
-            next_steps.append("Review Metformin use and eGFR before proceeding.")
-            next_steps.append("Monitor renal function post-scan if proceeding with contrast-enhanced CT.")
-
+            next_steps.append(
+                "Review Metformin use and eGFR before proceeding."
+            )
+            next_steps.append(
+                "Monitor renal function post-scan if proceeding with contrast-enhanced CT."
+            )
+        
         if thyroid_flag == "autonomous_nodule_contrast_risk":
-            next_steps.append("Review thyroid status and consider endocrinology consultation before proceeding with contrast.")
-            next_steps.append("Consider non-contrast imaging or alternative modality if appropriate.")
+            next_steps.append(
+                "Autonomous thyroid nodule risk noted. Proceed with caution under local thyroid-risk policy."
+            )
+            next_steps.append(
+                "Consider post-scan thyroid-related follow-up or senior review if clinically indicated."
+            )
 
         return {
-            "suggested_protocol": "conditional_contrast_protocol",
+            "suggested_protocol": "proceed_with_caution_protocol",
             "next_steps": next_steps,
-            "alternative_consideration": "Proceed only if review is satisfactory; otherwise consider non-contrast CT or another modality."
+            "alternative_consideration": (
+                "Proceed with the requested contrast protocol if local safety checks are satisfactory; "
+                "otherwise consider protocol adjustment or senior review."
+            )
         }
 
     return {

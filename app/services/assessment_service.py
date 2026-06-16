@@ -1,3 +1,4 @@
+from app.rules.allergy_history import assess_allergy_history_risk
 from app.rules.missing_info import detect_missing_information, classify_missing_information_severity
 from app.rules.renal import assess_renal_risk
 from app.rules.pregnancy import assess_pregnancy_risk
@@ -51,6 +52,43 @@ def build_contrast_medication_precautions(
 
     return precautions
 
+def build_contrast_safety_precautions(
+    contrast_reaction_risk: dict,
+    allergy_risk: dict,
+) -> list[dict]:
+    precautions = []
+
+    contrast_flag = contrast_reaction_risk.get("flag")
+    allergy_flag = allergy_risk.get("flag")
+
+    if contrast_flag in {
+        "mild_contrast_reaction_risk",
+        "moderate_contrast_reaction_risk",
+    }:
+        precautions.append({
+            "category": "Prior Contrast Reaction",
+            "flag": contrast_flag,
+            "message": contrast_reaction_risk.get("message", ""),
+            "pre_scan_instruction": (
+                "Ensure contrast reaction readiness and close patient observation "
+                "according to local department protocol."
+            ),
+            "post_scan_instruction": None,
+        })
+
+    if allergy_flag == "unrelated_allergy_history_caution":
+        precautions.append({
+            "category": "Unrelated Allergy History",
+            "flag": allergy_flag,
+            "message": allergy_risk.get("message", ""),
+            "pre_scan_instruction": (
+                "Confirm allergy history is unrelated to iodinated contrast, document it, "
+                "and ensure contrast reaction readiness according to local department protocol."
+            ),
+            "post_scan_instruction": None,
+        })
+
+    return precautions
 
 def run_assessment(case: RadiologyCaseInput) -> dict:
     missing_info = detect_missing_information(case)
@@ -58,12 +96,17 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
     renal_risk = assess_renal_risk(case)
     pregnancy_risk = assess_pregnancy_risk(case)
     contrast_reaction_risk = assess_contrast_reaction_risk(case)
+    allergy_risk = assess_allergy_history_risk(case)
     metformin_risk = assess_metformin_risk(case)
     thyroid_risk = assess_thyroid_risk(case)
     contrast_medication_precautions = (build_contrast_medication_precautions(
         metformin_risk=metformin_risk,
         thyroid_risk=thyroid_risk,
     ))
+    contrast_safety_precautions = build_contrast_safety_precautions(
+        contrast_reaction_risk=contrast_reaction_risk,
+        allergy_risk=allergy_risk,
+    )
     overall_decision = generate_overall_decision(
         urgency_level=case.urgency_level.value,
         missing_information=missing_info,
@@ -71,6 +114,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
+        allergy_risk=allergy_risk,
         metformin_risk=metformin_risk,
         thyroid_risk=thyroid_risk,
     )
@@ -197,6 +241,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
             "renal_flag": renal_risk.get("flag"),
             "pregnancy_flag": pregnancy_risk.get("flag"),
             "contrast_reaction_flag": contrast_reaction_risk.get("flag"),
+            "allergy_flag": allergy_risk.get("flag"),
             "metformin_flag": metformin_risk.get("flag"),
             "thyroid_flag": thyroid_risk.get("flag"),
             "active_topics": active_topics,
@@ -213,9 +258,11 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         "renal_risk": renal_risk,
         "pregnancy_risk": pregnancy_risk,
         "contrast_reaction_risk": contrast_reaction_risk,
+        "allergy_risk": allergy_risk,
         "metformin_risk": metformin_risk,
         "thyroid_risk": thyroid_risk,
         "contrast_medication_precautions": contrast_medication_precautions,
+        "contrast_safety_precautions": contrast_safety_precautions,
         "overall_decision": overall_decision,
         "protocol_recommendation": protocol_recommendation,
         "explanation": explanation,
