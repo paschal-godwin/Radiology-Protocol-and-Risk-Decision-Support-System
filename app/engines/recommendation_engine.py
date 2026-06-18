@@ -7,12 +7,16 @@ def generate_protocol_recommendation(
     contrast_reaction_risk: dict,
     metformin_risk: dict,
     thyroid_risk: dict,
+    allergy_risk: dict,
+    asthma_risk: dict,
 ) -> dict:
     renal_flag = renal_risk.get("flag")
     pregnancy_flag = pregnancy_risk.get("flag")
     contrast_flag = contrast_reaction_risk.get("flag")
     metformin_flag = metformin_risk.get("flag")
     thyroid_flag = thyroid_risk.get("flag")
+    allergy_flag = allergy_risk.get("flag")
+    asthma_flag = asthma_risk.get("flag")       
     action = overall_decision.get("recommended_action")
     contrast_medication_precautions = overall_decision.get("contrast_medication_precautions", [])
     
@@ -163,15 +167,25 @@ def generate_protocol_recommendation(
             next_steps.append(
                 "Consider post-scan thyroid-related follow-up or senior review if clinically indicated."
             )
+        
+        if allergy_flag == "unrelated_allergy_history_caution":
+                next_steps.append(
+                    "Unrelated allergy history noted. Proceed with caution and ensure contrast reaction readiness according to local department protocol."
+                )
 
-        return {
-            "suggested_protocol": "proceed_with_caution_protocol",
-            "next_steps": next_steps,
-            "alternative_consideration": (
-                "Proceed with the requested contrast protocol if local safety checks are satisfactory; "
-                "otherwise consider protocol adjustment or senior review."
+        if asthma_flag == "asthma_history_caution":
+            next_steps.append(
+                "Asthma history noted. Proceed with caution and ensure readiness to manage bronchospasm or allergic-like reaction according to local department protocol."
             )
-        }
+
+            return {
+                "suggested_protocol": "proceed_with_caution_protocol",
+                "next_steps": next_steps,
+                "alternative_consideration": (
+                    "Proceed with the requested contrast protocol if local safety checks are satisfactory; "
+                    "otherwise consider protocol adjustment or senior review."
+                )
+            }
 
     return {
         "suggested_protocol": "proceed_with_requested_contrast_protocol",

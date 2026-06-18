@@ -5,6 +5,7 @@ def count_active_risk_flags(*flags):
         "no_pregnancy_risk_detected",
         "no_contrast_reaction_risk_detected",
         "no_allergy_history_risk_detected",
+        "no_asthma_risk_detected",
         "no_metformin_risk_detected",
         "no_thyroid_risk_detected",
     }
@@ -19,6 +20,7 @@ def generate_overall_decision(
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
     allergy_risk: dict,
+    asthma_risk: dict,
     metformin_risk: dict,
     thyroid_risk: dict
 ) -> dict:
@@ -26,6 +28,7 @@ def generate_overall_decision(
     pregnancy_flag = pregnancy_risk.get("flag")
     contrast_flag = contrast_reaction_risk.get("flag")
     allergy_flag = allergy_risk.get("flag")
+    asthma_flag= asthma_risk.get("flag")
     metformin_flag = metformin_risk.get("flag")
     thyroid_flag = thyroid_risk.get("flag")
     metformin_message = metformin_risk.get("post_scan_instructions")
@@ -35,6 +38,7 @@ def generate_overall_decision(
         pregnancy_flag,
         contrast_flag,
         allergy_flag,
+        asthma_flag,
         metformin_flag,
         thyroid_flag,
     )
@@ -143,6 +147,7 @@ def generate_overall_decision(
             "mild_contrast_reaction_risk",
             "moderate_contrast_reaction_risk"}
         or allergy_flag == "unrelated_allergy_history_caution"
+        or asthma_flag == "asthma_history_caution"
         or metformin_flag == "metformin_risk_low_review_recommended"
         or thyroid_flag == "autonomous_nodule_contrast_risk"
     )

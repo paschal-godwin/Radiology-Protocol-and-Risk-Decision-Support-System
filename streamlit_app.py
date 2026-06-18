@@ -77,6 +77,7 @@ def initialize_state():
         "contrast": True,
         "urgency": "routine",
         "allergy": "false",
+        "asthma": "false",
         "egfr": "20",
         "pregnancy_status": "not_applicable",
         "reaction": "none",
@@ -118,6 +119,11 @@ def load_demo_into_state(case_name: str):
         "unknown"
         if demo["allergy_history"] is None
         else ("true" if demo["allergy_history"] else "false")
+    )
+    st.session_state["asthma"] = (
+        "unknown"
+        if demo.get("asthma_history") is None
+        else ("true" if demo.get("asthma_history") else "false")
     )
     st.session_state["egfr"] = "" if demo["egfr"] is None else str(demo["egfr"])
     st.session_state["pregnancy_status"] = demo["pregnancy_status"]
@@ -423,6 +429,17 @@ def build_case_input_from_form() -> RadiologyCaseInput | None:
             options=["false", "true", "unknown"],
             key="allergy",
         )
+
+        asthma_history = st.selectbox(
+            "Asthma History",
+            options=["false", "true", "unknown"],
+            key="asthma",
+            help=(
+                "Select true if the patient has a known history of asthma. "
+                "This is separate from unrelated allergy history and prior contrast reaction."
+            ),
+        )
+
         metformin_use = st.selectbox(
             "Metformin Use",
             options=[member.value for member in MetforminUse],
@@ -502,6 +519,11 @@ def build_case_input_from_form() -> RadiologyCaseInput | None:
     else:
         allergy_history_value = allergy_history == "true"
 
+    if asthma_history == "unknown":
+        asthma_history_value = None
+    else:
+        asthma_history_value = asthma_history == "true"
+
     return RadiologyCaseInput(
         age=int(age),
         sex=Sex(sex),
@@ -511,6 +533,7 @@ def build_case_input_from_form() -> RadiologyCaseInput | None:
         urgency_level=UrgencyLevel(urgency_level),
         egfr=egfr_value,
         allergy_history=allergy_history_value,
+        asthma_history=asthma_history_value,
         prior_contrast_reaction=PriorContrastReaction(prior_contrast_reaction),
         metformin_use=MetforminUse(metformin_use),
         thyroid_status=ThyroidStatus(thyroid_status),
@@ -703,6 +726,7 @@ def load_demo_case(case_name: str) -> dict:
             "urgency_level": "routine",
             "egfr": 20.0,
             "allergy_history": True,
+            "asthma_history": False,
             "prior_contrast_reaction": "severe",
             "thyroid_status": "normal",
             "metformin_use": "no",
@@ -716,6 +740,7 @@ def load_demo_case(case_name: str) -> dict:
             "urgency_level": "routine",
             "egfr": 90.0,
             "allergy_history": False,
+            "asthma_history": False,
             "prior_contrast_reaction": "none",
             "thyroid_status": "normal",
             "metformin_use": "no",
@@ -729,6 +754,7 @@ def load_demo_case(case_name: str) -> dict:
             "urgency_level": "routine",
             "egfr": 88.0,
             "allergy_history": False,
+            "asthma_history": False,
             "prior_contrast_reaction": "none",
             "thyroid_status": "normal",
             "metformin_use": "no",

@@ -55,6 +55,7 @@ class RadiologyCaseInput(BaseModel):
     # Risk-related info
     egfr: Optional[float] = None
     allergy_history: Optional[bool] = None
+    asthma_history: Optional[bool] = None
     prior_contrast_reaction: PriorContrastReaction = PriorContrastReaction.none
     metformin_use: MetforminUse = MetforminUse.unknown
     thyroid_status: ThyroidStatus = ThyroidStatus.unknown

@@ -1,4 +1,5 @@
 from app.rules.allergy_history import assess_allergy_history_risk
+from app.rules.asthma import assess_asthma_risk
 from app.rules.missing_info import detect_missing_information, classify_missing_information_severity
 from app.rules.renal import assess_renal_risk
 from app.rules.pregnancy import assess_pregnancy_risk
@@ -55,11 +56,13 @@ def build_contrast_medication_precautions(
 def build_contrast_safety_precautions(
     contrast_reaction_risk: dict,
     allergy_risk: dict,
+    asthma_risk: dict,
 ) -> list[dict]:
     precautions = []
 
     contrast_flag = contrast_reaction_risk.get("flag")
     allergy_flag = allergy_risk.get("flag")
+    asthma_flag = asthma_risk.get("flag")
 
     if contrast_flag in {
         "mild_contrast_reaction_risk",
@@ -88,6 +91,18 @@ def build_contrast_safety_precautions(
             "post_scan_instruction": None,
         })
 
+    if asthma_flag == "asthma_history_caution":
+        precautions.append({
+            "category": "Asthma History",
+            "flag": asthma_flag,
+            "message": asthma_risk.get("message", ""),
+            "pre_scan_instruction": (
+                "Confirm asthma history and ensure appropriate monitoring and treatment "
+                "according to local department protocol."
+            ),
+            "post_scan_instruction": None,
+        })
+
     return precautions
 
 def run_assessment(case: RadiologyCaseInput) -> dict:
@@ -97,6 +112,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
     pregnancy_risk = assess_pregnancy_risk(case)
     contrast_reaction_risk = assess_contrast_reaction_risk(case)
     allergy_risk = assess_allergy_history_risk(case)
+    asthma_risk = assess_asthma_risk(case)
     metformin_risk = assess_metformin_risk(case)
     thyroid_risk = assess_thyroid_risk(case)
     contrast_medication_precautions = (build_contrast_medication_precautions(
@@ -106,6 +122,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
     contrast_safety_precautions = build_contrast_safety_precautions(
         contrast_reaction_risk=contrast_reaction_risk,
         allergy_risk=allergy_risk,
+        asthma_risk=asthma_risk,
     )
     overall_decision = generate_overall_decision(
         urgency_level=case.urgency_level.value,
@@ -115,6 +132,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
         allergy_risk=allergy_risk,
+        asthma_risk=asthma_risk,
         metformin_risk=metformin_risk,
         thyroid_risk=thyroid_risk,
     )
@@ -242,6 +260,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
             "pregnancy_flag": pregnancy_risk.get("flag"),
             "contrast_reaction_flag": contrast_reaction_risk.get("flag"),
             "allergy_flag": allergy_risk.get("flag"),
+            "asthma_flag": asthma_risk.get("flag"),
             "metformin_flag": metformin_risk.get("flag"),
             "thyroid_flag": thyroid_risk.get("flag"),
             "active_topics": active_topics,
@@ -259,6 +278,7 @@ def run_assessment(case: RadiologyCaseInput) -> dict:
         "pregnancy_risk": pregnancy_risk,
         "contrast_reaction_risk": contrast_reaction_risk,
         "allergy_risk": allergy_risk,
+        "asthma_risk": asthma_risk,
         "metformin_risk": metformin_risk,
         "thyroid_risk": thyroid_risk,
         "contrast_medication_precautions": contrast_medication_precautions,
