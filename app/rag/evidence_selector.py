@@ -10,8 +10,8 @@ TOPIC_KEYWORDS = {
         "iodinated contrast", "contrast-induced", "renal function"
     ],
     "contrast_reaction": [
-        "reaction", "hypersensitivity", "allergy", "premedication",
-        "adverse event", "severe reaction", "contrast media reaction"
+        "reaction","hypersensitivity","allergy","allergic-like","unrelated allergy","asthma",
+        "bronchospasm","premedication","adverse event","severe reaction","contrast media reaction",
     ],
     "pregnancy": [
         "pregnancy", "pregnant", "fetus", "fetal", "maternal"
@@ -54,6 +54,13 @@ CLAIM_KEYWORDS = {
         "contrast medium",
         "review before proceeding",
         "caution",
+        "asthma",
+        "bronchospasm",
+        "allergic-like reaction",
+        "unrelated allergy",
+        "risk factor",
+        "risk factors",
+        "atopy",
     ],
     "pregnancy": [
         "pregnant",

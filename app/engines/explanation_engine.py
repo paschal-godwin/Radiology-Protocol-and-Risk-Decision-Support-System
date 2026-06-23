@@ -25,6 +25,8 @@ def generate_explanation(
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
+    allergy_risk: dict,
+    asthma_risk: dict,
     metformin_risk: dict,
     thyroid_risk: dict,
     overall_decision: dict,
@@ -55,6 +57,12 @@ def generate_explanation(
     if contrast_reaction_risk.get("flag") not in {None, "no_contrast_reaction_risk_detected"}:
         active_risks.append("contrast reaction history")
 
+    if allergy_risk.get("flag") not in {None, "no_allergy_history_risk_detected"}:
+        active_risks.append("unrelated allergy history")
+
+    if asthma_risk.get("flag") not in {None, "no_asthma_risk_detected"}:
+        active_risks.append("asthma history")
+
     if metformin_risk.get("flag") not in {None, "no_metformin_risk_detected"}:
         active_risks.append("metformin-related considerations")
 
@@ -69,14 +77,20 @@ def generate_explanation(
         "no_contrast_reaction_risk_detected",
         "no_metformin_risk_detected",
         "no_thyroid_risk_detected",
+        "no_allergy_history_risk_detected",
+        "no_asthma_risk_detected",
     }
 
     for risk_dict in [
         renal_risk,
         pregnancy_risk,
         contrast_reaction_risk,
+        allergy_risk,
+        asthma_risk,
         metformin_risk,
         thyroid_risk,
+        allergy_risk,
+        asthma_risk,
     ]:
         message = risk_dict.get("message")
         flag = risk_dict.get("flag")
@@ -96,6 +110,7 @@ def generate_explanation(
     renal_citation = None
     reaction_citation = None
     pregnancy_citation = None
+    safety_modifier_citation = None
     metformin_citation = None
     thyroid_citation = None
     if retrieved_guideline_evidence and retrieved_guideline_evidence.evidence_items:
@@ -108,6 +123,14 @@ def generate_explanation(
             "mild_contrast_reaction_risk",
         }:
             reaction_citation = _get_best_citation_by_topic(
+                retrieved_guideline_evidence, "contrast_reaction"
+            )
+
+        if (
+            allergy_risk.get("flag") == "unrelated_allergy_history_caution"
+            or asthma_risk.get("flag") == "asthma_history_caution"
+        ):
+            safety_modifier_citation = _get_best_citation_by_topic(
                 retrieved_guideline_evidence, "contrast_reaction"
             )
 
@@ -153,6 +176,21 @@ def generate_explanation(
                 page_number=reaction_citation.page_number,
                 section=reaction_citation.section,
                 snippet=reaction_citation.snippet,
+            )
+        )
+
+    if safety_modifier_citation:
+        evidence_lines.append(
+            f"Contrast safety-modifier support was retrieved from {_build_citation_label(safety_modifier_citation)}."
+        )
+        citations.append(
+            ExplanationCitation(
+                claim="contrast_safety_modifier_risk",
+                topic=safety_modifier_citation.topic,
+                source_title=safety_modifier_citation.source_title,
+                page_number=safety_modifier_citation.page_number,
+                section=safety_modifier_citation.section,
+                snippet=safety_modifier_citation.snippet,
             )
         )
 

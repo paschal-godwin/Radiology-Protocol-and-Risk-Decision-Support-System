@@ -118,6 +118,72 @@ EVAL_CASES = [
         }
     },
     {
+    "name": "allergy_only_caution_case",
+    "input": {
+        "age": 42,
+        "sex": "female",
+        "pregnancy_status": "not_pregnant",
+        "exam_requested": "CT",
+        "contrast_requested": True,
+        "urgency_level": "routine",
+        "egfr": 86.0,
+        "allergy_history": True,
+        "asthma_history": False,
+        "prior_contrast_reaction": "none",
+        "thyroid_status": "normal",
+        "metformin_use": "no",
+        "diabetes_status": "non_diabetic"
+    },
+    "expected": {
+        "expected_overall_risk": "moderate",
+        "expected_action": "proceed_with_caution",
+        "expected_claims": ["contrast_safety_modifier_risk"],
+        "expected_topics": ["contrast_reaction"],
+
+        "expected_primary_source_title_by_claim": {
+            "contrast_safety_modifier_risk": "ACR-Manual-on-Contrast-Media"
+        },
+        "expected_primary_topic_by_claim": {
+            "contrast_safety_modifier_risk": "contrast_reaction"
+        },
+        "expected_multi_risk_escalation": False,
+        "manual_evidence_quality": "acceptable"
+    }
+},
+{
+    "name": "asthma_only_caution_case",
+    "input": {
+        "age": 36,
+        "sex": "male",
+        "pregnancy_status": "not_applicable",
+        "exam_requested": "CT",
+        "contrast_requested": True,
+        "urgency_level": "routine",
+        "egfr": 92.0,
+        "allergy_history": False,
+        "asthma_history": True,
+        "prior_contrast_reaction": "none",
+        "thyroid_status": "normal",
+        "metformin_use": "no",
+        "diabetes_status": "non_diabetic"
+    },
+    "expected": {
+        "expected_overall_risk": "moderate",
+        "expected_action": "proceed_with_caution",
+        "expected_claims": ["contrast_safety_modifier_risk"],
+        "expected_topics": ["contrast_reaction"],
+
+        "expected_primary_source_title_by_claim": {
+            "contrast_safety_modifier_risk": "ACR-Manual-on-Contrast-Media"
+        },
+        "expected_primary_topic_by_claim": {
+            "contrast_safety_modifier_risk": "contrast_reaction"
+        },
+        "expected_multi_risk_escalation": False,
+        "manual_evidence_quality": "acceptable"
+    }
+},
+ {
         "name": "pregnancy_review_case",
         "input": {
             "age": 31,
@@ -229,6 +295,7 @@ EVAL_CASES = [
             "expected_claims": [
                 "renal_risk",
                 "contrast_reaction_risk",
+                "contrast_safety_modifier_risk",
                 "metformin_risk"
             ],
             "expected_topics": [

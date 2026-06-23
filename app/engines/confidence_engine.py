@@ -4,13 +4,17 @@ from app.schemas.output import (
     ConfidenceBreakdown,
     ConfidenceComponent,
 )
-
+def _append_unique(items: list[str], value: str) -> None:
+    if value not in items:
+        items.append(value)
 
 def derive_active_topics_and_claims(
     missing_information: List[str],
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
+    asthma_risk: dict,
+    allergy_risk: dict,
     metformin_risk: dict,
     thyroid_risk: dict,
 ) -> Tuple[List[str], List[str]]:
@@ -26,8 +30,15 @@ def derive_active_topics_and_claims(
         "moderate_contrast_reaction_risk",
         "mild_contrast_reaction_risk",
     }:
-        active_topics.append("contrast_reaction")
+        _append_unique(active_topics, "contrast_reaction")
         active_claims.append("contrast_reaction_risk")
+
+    if (
+        allergy_risk.get("flag") == "unrelated_allergy_history_caution"
+        or asthma_risk.get("flag") == "asthma_history_caution"
+    ):
+        _append_unique(active_topics, "contrast_reaction")
+        active_claims.append("contrast_safety_modifier_risk")
 
     if pregnancy_risk.get("flag") == "pregnancy_risk_review_required":
         active_topics.append("pregnancy")
@@ -51,6 +62,8 @@ def compute_rule_confidence(
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
+    asthma_risk: dict,
+    allergy_risk: dict,
     metformin_risk: dict,
     thyroid_risk: dict,
     overall_decision: dict,
@@ -70,7 +83,7 @@ def compute_rule_confidence(
         pregnancy_risk.get("flag") == "pregnancy_risk_review_required",
         contrast_reaction_risk.get("flag") == "high_contrast_reaction_risk",
         metformin_risk.get("flag") == "metformin_risk_hold_required",
-        thyroid_risk.get("flag") in {"hyperthyroid_contrast_risk", "autonomous_nodule_contrast_risk"},
+        thyroid_risk.get("flag") in {"hyperthyroid_contrast_risk"},
     ]
 
     active_moderate_flags = [
@@ -81,8 +94,10 @@ def compute_rule_confidence(
             "mild_contrast_reaction_risk",
             "contrast_reaction_history_unknown",
         },
+        allergy_risk.get("flag") == "unrelated_allergy_history_caution",
+        asthma_risk.get("flag") == "asthma_history_caution",
         metformin_risk.get("flag") == "metformin_risk_low_review_recommended",
-        thyroid_risk.get("flag") in {"hyperthyroid_contrast_risk", "autonomous_nodule_contrast_risk"},
+        thyroid_risk.get("flag") in {"autonomous_nodule_contrast_risk"},
     ]
 
     if any(active_high_flags):
@@ -267,6 +282,8 @@ def build_confidence(
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
+    asthma_risk: dict,
+    allergy_risk: dict,
     metformin_risk: dict,
     thyroid_risk: dict,
     overall_decision: dict,
@@ -278,6 +295,8 @@ def build_confidence(
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
+        allergy_risk=allergy_risk,
+        asthma_risk=asthma_risk,
         metformin_risk=metformin_risk,
         thyroid_risk=thyroid_risk,
     )
@@ -287,6 +306,8 @@ def build_confidence(
         renal_risk=renal_risk,
         pregnancy_risk=pregnancy_risk,
         contrast_reaction_risk=contrast_reaction_risk,
+        allergy_risk=allergy_risk,
+        asthma_risk=asthma_risk,
         metformin_risk=metformin_risk,
         thyroid_risk=thyroid_risk,
         overall_decision=overall_decision,

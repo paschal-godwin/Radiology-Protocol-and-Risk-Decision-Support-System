@@ -7,6 +7,8 @@ def build_retrieval_queries(
     renal_risk: dict,
     pregnancy_risk: dict,
     contrast_reaction_risk: dict,
+    allergy_risk: dict,
+    asthma_risk: dict,
     metformin_risk: dict,
     thyroid_risk: dict,
     overall_decision: dict,
@@ -51,29 +53,47 @@ def build_retrieval_queries(
         })
 
     reaction_flag = contrast_reaction_risk.get("flag")
+    allergy_flag = allergy_risk.get("flag")
+    asthma_flag = asthma_risk.get("flag")
+
+    contrast_reaction_terms = []
+
     if reaction_flag == "high_contrast_reaction_risk":
-        queries.append({
-            "topic": "contrast_reaction",
-            "query": (
-                f"{common_context} "
-                f"Prior contrast reaction: {case.prior_contrast_reaction.value}. "
-                "Prior severe contrast reaction, hypersensitivity precautions, "
-                "contrast re-administration risk, premedication or avoidance."
-            )
-        })
+        contrast_reaction_terms.append(
+            "Prior severe contrast reaction, hypersensitivity precautions, "
+            "contrast re-administration risk, premedication or avoidance."
+        )
+
     elif reaction_flag in {
         "moderate_contrast_reaction_risk",
         "mild_contrast_reaction_risk",
     }:
+        contrast_reaction_terms.append(
+            "Prior mild or moderate contrast reaction, contrast reaction precautions, "
+            "adverse reaction screening and readiness."
+        )
+
+    if allergy_flag == "unrelated_allergy_history_caution":
+        contrast_reaction_terms.append(
+            "Unrelated allergy history, atopy, allergic-like reaction risk factors, "
+            "contrast reaction screening and preparedness."
+        )
+
+    if asthma_flag == "asthma_history_caution":
+        contrast_reaction_terms.append(
+            "Asthma history, bronchospasm, allergic-like reaction risk factors, "
+            "contrast reaction screening and preparedness."
+        )
+
+    if contrast_reaction_terms:
         queries.append({
             "topic": "contrast_reaction",
             "query": (
                 f"{common_context} "
                 f"Prior contrast reaction: {case.prior_contrast_reaction.value}. "
-                "Contrast reaction precautions and adverse reaction screening."
+                + " ".join(contrast_reaction_terms)
             )
         })
-
     pregnancy_flag = pregnancy_risk.get("flag")
     if pregnancy_flag == "pregnancy_risk_review_required":
         queries.append({
